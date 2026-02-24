@@ -1276,7 +1276,7 @@ do
                 self:_Draw('menu_tooltip_body', 'rect', self._theming.surface1, 1000, tooltipOrigin, tooltipFullSize, true)
                 self:_Draw('menu_tooltip_border', 'gradient', nil, 1001, 'vertical', tooltipOrigin, tooltipFullSize, self._theming.accent)
                 self:_Draw('menu_tooltip_inner', 'rect', self._theming.surface1, 1002, tooltipOrigin + Vector2.new(1, 1), tooltipFullSize - Vector2.new(2, 2), true)
-                self:_Draw('menu_tooltip_text', 'text', self._theming.text, 1003, tooltipOrigin + Vector2.new(self._padding / 2, tooltipFullSize.y / 2), hoveredTooltip, true)
+                self:_Draw('menu_tooltip_text', 'text', self._theming.text, 1003, tooltipOrigin + Vector2.new(self._padding / 2, self._padding / 2), hoveredTooltip, true)
             end
         else
             self:_UndrawStartsWith('menu_tooltip')
