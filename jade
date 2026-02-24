@@ -3,6 +3,7 @@
     jade ui library
     forked from nulare's library
 
+
 ]]
 
 UILib = {
@@ -617,6 +618,7 @@ do
 
     function UILib:Step()
         local menuTitle = self._custom_title_enabled and self._custom_title or self.title
+        local hoveredTooltip = nil
 
         -- input processing
         setrobloxinput(not self._menu_open or not self._block_roblox_input)
@@ -1016,27 +1018,7 @@ do
                                     local hintPosition = labelPosition + Vector2.new(labelSize.x + hintSize.x - 4, hintSize.y / 2)
                                     local isHoveringHint = self:_IsMouseWithinBounds(hintPosition - Vector2.new(3, 3), hintSize + Vector2.new(6, 6))
                                     if isHoveringHint then
-                                        local mousePos = self:_GetMousePos()
-                                        if not self._tooltip_mouse_prev then
-                                            self._tooltip_mouse_prev = mousePos
-                                            self._tooltip_hover_time = os.clock()
-                                        elseif self._tooltip_mouse_prev.x ~= mousePos.x then
-                                            self._tooltip_mouse_prev = nil
-                                            self._tooltip_hover_time = nil
-                                        elseif os.clock() - self._tooltip_hover_time > 0.15 then
-                                            local tooltipFade = 1 - ((self._tooltip_hover_time + 0.15) - (os.clock() - 0.25)) / 0.25
-                                            if tooltipFade < 1.1 then self:_SetOpacityStartsWith('menu_tooltip', math.abs((self._menu_open and 0 or 1) - clamp(tooltipFade, 0, 1))) end
-                                            local tooltipOrigin = Vector2.new(mousePos.x + 11, mousePos.y)
-                                            local tooltipSize = self:_GetTextBounds(sectionItem.tooltip)
-                                            local tooltipFullSize = tooltipSize + Vector2.new(self._padding, self._padding)
-                                            
-                                            self:_Draw('menu_tooltip_body', 'rect', self._theming.surface1, 1000, tooltipOrigin, tooltipFullSize, true)
-                                            self:_Draw('menu_tooltip_border', 'gradient', nil, 1001, 'vertical', tooltipOrigin, tooltipFullSize, self._theming.accent)
-                                            self:_Draw('menu_tooltip_inner', 'rect', self._theming.surface1, 1002, tooltipOrigin + Vector2.new(1, 1), tooltipFullSize - Vector2.new(2, 2), true)
-                                            self:_Draw('menu_tooltip_text', 'text', self._theming.text, 1003, tooltipOrigin + Vector2.new(self._padding / 2, tooltipFullSize.y / 2), sectionItem.tooltip, true)
-                                        end
-                                    else
-                                        self:_UndrawStartsWith('menu_tooltip')
+                                        hoveredTooltip = sectionItem.tooltip
                                     end
                                     self:_Draw(sectionItemId .. '_hint', 'text', self._theming.subtext, 21, hintPosition, '(?)', true, 'center', 10)
                                 end
@@ -1267,6 +1249,39 @@ do
             self:_SetOpacityStartsWith('menu_', math.abs((self._menu_open and 0 or 1) - clamp(menuFade, 0, 1)))
         elseif not self._menu_open and menuFade > 1.1 and menuFade < 1.6 then
             self:_UndrawStartsWith('menu_')
+        end
+
+        -- tooltip rendering logic
+        if hoveredTooltip then
+            local mousePos = self:_GetMousePos()
+            local prevMouse = self._tooltip_mouse_prev
+            local isMoving = false
+            if prevMouse then
+                local dx = mousePos.x - prevMouse.x
+                local dy = mousePos.y - prevMouse.y
+                if math.sqrt(dx*dx + dy*dy) > 2 then isMoving = true end
+            end
+
+            if not self._tooltip_mouse_prev or isMoving then
+                self._tooltip_mouse_prev = mousePos
+                self._tooltip_hover_time = os.clock()
+                self:_UndrawStartsWith('menu_tooltip')
+            elseif os.clock() - self._tooltip_hover_time > 0.15 then
+                local tooltipFade = 1 - ((self._tooltip_hover_time + 0.15) - (os.clock() - 0.25)) / 0.25
+                if tooltipFade < 1.1 then self:_SetOpacityStartsWith('menu_tooltip', math.abs((self._menu_open and 0 or 1) - clamp(tooltipFade, 0, 1))) end
+                local tooltipOrigin = Vector2.new(mousePos.x + 11, mousePos.y)
+                local tooltipSize = self:_GetTextBounds(hoveredTooltip)
+                local tooltipFullSize = tooltipSize + Vector2.new(self._padding, self._padding)
+                
+                self:_Draw('menu_tooltip_body', 'rect', self._theming.surface1, 1000, tooltipOrigin, tooltipFullSize, true)
+                self:_Draw('menu_tooltip_border', 'gradient', nil, 1001, 'vertical', tooltipOrigin, tooltipFullSize, self._theming.accent)
+                self:_Draw('menu_tooltip_inner', 'rect', self._theming.surface1, 1002, tooltipOrigin + Vector2.new(1, 1), tooltipFullSize - Vector2.new(2, 2), true)
+                self:_Draw('menu_tooltip_text', 'text', self._theming.text, 1003, tooltipOrigin + Vector2.new(self._padding / 2, tooltipFullSize.y / 2), hoveredTooltip, true)
+            end
+        else
+            self:_UndrawStartsWith('menu_tooltip')
+            self._tooltip_mouse_prev = nil
+            self._tooltip_hover_time = nil
         end
     end
 
