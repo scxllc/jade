@@ -359,7 +359,7 @@ do
             end,
             AddKeybind = function(_, value, mode, canChange, callback)
                 local item = {
-                    value = value, callback = callback, mode = mode or 'Hold',
+                    value = value, callback = callback, mode = mode or 'Toggle',
                     canChange = canChange or true, _listening = false, _listening_start = 0
                 }
                 self._tree[tabName]._items[sectionName]._items[itemId].keybind = item
@@ -618,6 +618,39 @@ do
         if menuKeyPressed then
             self._menu_open = not self._menu_open
             self._menu_toggled_at = os.clock()
+        end
+
+        -- process keybinds globally (works even when menu is hidden)
+        for _, tabContent in pairs(self._tree) do
+            for _, sectionContent in pairs(tabContent._items) do
+                for _, sectionItem in ipairs(sectionContent._items) do
+                    local kb = sectionItem.keybind
+                    if kb and not kb._listening and kb.value then
+                        local boundKey = self._inputs[kb.value]
+                        if boundKey then
+                            if kb.mode == 'Toggle' then
+                                if boundKey.click then
+                                    sectionItem.value = not sectionItem.value
+                                    if sectionItem.callback then sectionItem.callback(sectionItem.value) end
+                                end
+                            elseif kb.mode == 'Hold' then
+                                if boundKey.held and not sectionItem.value then
+                                    sectionItem.value = true
+                                    if sectionItem.callback then sectionItem.callback(true) end
+                                elseif not boundKey.held and sectionItem.value then
+                                    sectionItem.value = false
+                                    if sectionItem.callback then sectionItem.callback(false) end
+                                end
+                            elseif kb.mode == 'Always' then
+                                if not sectionItem.value then
+                                    sectionItem.value = true
+                                    if sectionItem.callback then sectionItem.callback(true) end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
 
         -- draw watermark
@@ -895,32 +928,7 @@ do
                                             end
                                         end
                                     end
-                                    -- activate toggle based on bound key + mode
-                                    if not itemKeybind._listening and itemKeybind.value then
-                                        local boundKey = self._inputs[itemKeybind.value]
-                                        if boundKey then
-                                            if itemKeybind.mode == 'Toggle' then
-                                                if boundKey.click then
-                                                    local newValue = not sectionItem.value
-                                                    sectionItem.value = newValue
-                                                    if itemCallback then itemCallback(newValue) end
-                                                end
-                                            elseif itemKeybind.mode == 'Hold' then
-                                                if boundKey.held and not sectionItem.value then
-                                                    sectionItem.value = true
-                                                    if itemCallback then itemCallback(true) end
-                                                elseif not boundKey.held and sectionItem.value then
-                                                    sectionItem.value = false
-                                                    if itemCallback then itemCallback(false) end
-                                                end
-                                            elseif itemKeybind.mode == 'Always' then
-                                                if not sectionItem.value then
-                                                    sectionItem.value = true
-                                                    if itemCallback then itemCallback(true) end
-                                                end
-                                            end
-                                        end
-                                    end
+
                                     local keybindColor = itemKeybind.value and self._theming.text or self._theming.subtext
                                     self:_Draw(sectionItemId .. '_keybind', 'text', keybindColor, 20, keybindOrigin, keybindText, true, 'left', 10)
                                 elseif itemColorpicker then
