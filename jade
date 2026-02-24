@@ -2,9 +2,6 @@
 
     jade ui library
     forked from nulare's library
-    by @scxllc on discord
-
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/scxllc/jade/main/jade.lua'))()
 
 ]]
 
@@ -494,9 +491,7 @@ do
         local settingsTab = self:Tab(customName or 'Menu')
 
         local menuSection = settingsTab:Section('Menu')
-        local menuKey = menuSection:Toggle('Ov. menu key', self._overwrite_menu_key, function(newValue)
-            self._overwrite_menu_key = newValue
-        end)
+        local menuKey = menuSection:Toggle('Menu Key', true)
         menuKey:AddKeybind(self._menu_key, 'Hold', false, function(newValue)
             self._menu_key = self:_KeyIDToName(newValue)
         end)
@@ -613,7 +608,7 @@ do
         local clickFrame = self:_IsKeyPressed('m1')
         local mouseHeld = self:_IsKeyHeld('m1')
         local ctxFrame = self:_IsKeyPressed('m2')
-        local menuKeyPressed = self:_IsKeyPressed(self._overwrite_menu_key and self._menu_key or 'f1')
+        local menuKeyPressed = self:_IsKeyPressed(self._menu_key or 'f1')
 
         if menuKeyPressed then
             self._menu_open = not self._menu_open
