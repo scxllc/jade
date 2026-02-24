@@ -44,15 +44,15 @@ UILib = {
     _tab_h = 30,
     _tab_w = 90,
     _theming = {
-        accent = Color3.fromRGB(0, 168, 107),
+        accent = Color3.fromRGB(0, 200, 120),
         unsafe = Color3.fromRGB(255, 215, 0),
-        body = Color3.fromRGB(6, 6, 6),
+        body = Color3.fromRGB(0, 0, 0),
         text = Color3.fromRGB(210, 210, 210),
-        subtext = Color3.fromRGB(80, 80, 80),
-        border1 = Color3.fromRGB(32, 32, 32),
-        border0 = Color3.fromRGB(22, 22, 22),
-        surface1 = Color3.fromRGB(20, 20, 20),
-        surface0 = Color3.fromRGB(12, 12, 12),
+        subtext = Color3.fromRGB(75, 75, 75),
+        border1 = Color3.fromRGB(25, 25, 25),
+        border0 = Color3.fromRGB(16, 16, 16),
+        surface1 = Color3.fromRGB(14, 14, 14),
+        surface0 = Color3.fromRGB(8, 8, 8),
         crust = Color3.fromRGB(0, 0, 0),
     },
 }
@@ -508,14 +508,14 @@ do
             local theme = newValue[1]
             if theme == themes[1] then
                 -- jade
-                themingAccentColor:Set(Color3.fromRGB(0, 168, 107))
-                themingBodyColor:Set(Color3.fromRGB(6, 6, 6))
+                themingAccentColor:Set(Color3.fromRGB(0, 200, 120))
+                themingBodyColor:Set(Color3.fromRGB(0, 0, 0))
                 themingTextColor:Set(Color3.fromRGB(210, 210, 210))
-                themingSubtextColor:Set(Color3.fromRGB(80, 80, 80))
-                themingBorder1Color:Set(Color3.fromRGB(32, 32, 32))
-                themingBorder0Color:Set(Color3.fromRGB(22, 22, 22))
-                themingSurface1Color:Set(Color3.fromRGB(20, 20, 20))
-                themingSurface0Color:Set(Color3.fromRGB(12, 12, 12))
+                themingSubtextColor:Set(Color3.fromRGB(75, 75, 75))
+                themingBorder1Color:Set(Color3.fromRGB(25, 25, 25))
+                themingBorder0Color:Set(Color3.fromRGB(16, 16, 16))
+                themingSurface1Color:Set(Color3.fromRGB(14, 14, 14))
+                themingSurface0Color:Set(Color3.fromRGB(8, 8, 8))
                 themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
             elseif theme == themes[2] then
                 -- gamesense
@@ -772,8 +772,9 @@ do
             self:_Draw('menu_tab_panel_border', 'rect', self._theming.border1, 12, tabPanelPos + Vector2.new(tabPanelWidth, 0), Vector2.new(1, tabPanelSize.y), true)
             for tabName, tabContent in pairs(self._tree) do
                 local tabDrawId = 'menu_tab_' .. tostring(tabIter)
-                local tabSize = Vector2.new(tabPanelWidth, self._tab_h)
-                local tabPosition = Vector2.new(tabPanelPos.x, tabPanelPos.y + self._tab_h * tabIter)
+                local dynamicTabH = clamp(math.floor(bodyContentSize.y / math.max(tabCount, 1)), 24, 40)
+                local tabSize = Vector2.new(tabPanelWidth, dynamicTabH)
+                local tabPosition = Vector2.new(tabPanelPos.x, tabPanelPos.y + dynamicTabH * tabIter)
                 local isOpen = self._open_tab == tabName
                 if isOpen then
                     self:_Draw(tabDrawId .. '_backdrop', 'rect', self._theming.body, 13, tabPosition, tabSize, true)
