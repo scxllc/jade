@@ -2,6 +2,7 @@
 
     jade ui library
     forked from nulare's library
+
 ]]
 
 UILib = {
@@ -39,6 +40,7 @@ UILib = {
     _padding = 8,
     _tab_h = 30,
     _tab_w = 90,
+    _block_roblox_input = true,
     _theming = {
         accent = Color3.fromRGB(0, 200, 120),
         unsafe = Color3.fromRGB(255, 215, 0),
@@ -497,6 +499,9 @@ do
         menuSection:Toggle('Watermark', true, function(newValue)
             self:SetWatermarkEnabled(newValue)
         end)
+        menuSection:Toggle('Block Roblox Input', self._block_roblox_input, function(newValue)
+            self._block_roblox_input = newValue
+        end)
         menuSection:Toggle('Custom menu title', self._custom_title_enabled, function(newValue)
             self._custom_title_enabled = newValue
         end)
@@ -587,7 +592,7 @@ do
         local menuTitle = self._custom_title_enabled and self._custom_title or self.title
 
         -- input processing
-        setrobloxinput(not self._menu_open)
+        setrobloxinput(not self._menu_open or not self._block_roblox_input)
         for keycode, inputData in pairs(self._inputs) do
             local keycodeId = inputData.id
             local interacted = iskeypressed(keycodeId)
@@ -1231,6 +1236,14 @@ do
         elseif not self._menu_open and menuFade > 1.1 and menuFade < 1.6 then
             self:_UndrawStartsWith('menu_')
         end
+    end
+
+    function UILib:SetBlockRobloxInput(value) self._block_roblox_input = value end
+    function UILib:Unload()
+        for _, draw in pairs(self._drawings) do pcall(function() draw:Remove() end) end
+        self._drawings = {}
+        self._tree = {}
+        setrobloxinput(true)
     end
 
     function UILib:ShowDemoMenu()
