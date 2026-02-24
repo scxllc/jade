@@ -36,25 +36,27 @@ UILib = {
     title = 'jade',
     _custom_title_enabled = false,
     _custom_title = '',
-    w = 400,
+    w = 480,
     h = 480,
     x = 20,
     y = 100,
     _padding = 8,
-    _tab_h = 40,
+    _tab_h = 30,
+    _tab_w = 90,
     _theming = {
         accent = Color3.fromRGB(0, 168, 107),
         unsafe = Color3.fromRGB(255, 215, 0),
-        body = Color3.fromRGB(10, 10, 10),
+        body = Color3.fromRGB(5, 5, 5),
         text = Color3.fromRGB(232, 232, 232),
-        subtext = Color3.fromRGB(107, 122, 107),
-        border1 = Color3.fromRGB(42, 58, 42),
-        border0 = Color3.fromRGB(30, 46, 30),
-        surface1 = Color3.fromRGB(42, 53, 42),
-        surface0 = Color3.fromRGB(22, 30, 22),
-        crust = Color3.fromRGB(5, 8, 5),
+        subtext = Color3.fromRGB(120, 120, 120),
+        border1 = Color3.fromRGB(40, 40, 40),
+        border0 = Color3.fromRGB(32, 32, 32),
+        surface1 = Color3.fromRGB(42, 42, 42),
+        surface0 = Color3.fromRGB(24, 24, 24),
+        crust = Color3.fromRGB(0, 0, 0),
     },
 }
+
 local function clamp(x, a, b)
     if x > b then
         return b
@@ -507,14 +509,14 @@ do
             if theme == themes[1] then
                 -- jade
                 themingAccentColor:Set(Color3.fromRGB(0, 168, 107))
-                themingBodyColor:Set(Color3.fromRGB(10, 10, 10))
+                themingBodyColor:Set(Color3.fromRGB(5, 5, 5))
                 themingTextColor:Set(Color3.fromRGB(232, 232, 232))
-                themingSubtextColor:Set(Color3.fromRGB(107, 122, 107))
-                themingBorder1Color:Set(Color3.fromRGB(42, 58, 42))
-                themingBorder0Color:Set(Color3.fromRGB(30, 46, 30))
-                themingSurface1Color:Set(Color3.fromRGB(42, 53, 42))
-                themingSurface0Color:Set(Color3.fromRGB(22, 30, 22))
-                themingCrustColor:Set(Color3.fromRGB(5, 8, 5))
+                themingSubtextColor:Set(Color3.fromRGB(120, 120, 120))
+                themingBorder1Color:Set(Color3.fromRGB(40, 40, 40))
+                themingBorder0Color:Set(Color3.fromRGB(32, 32, 32))
+                themingSurface1Color:Set(Color3.fromRGB(42, 42, 42))
+                themingSurface0Color:Set(Color3.fromRGB(24, 24, 24))
+                themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
             elseif theme == themes[2] then
                 -- gamesense
                 themingAccentColor:Set(Color3.fromRGB(114, 178, 21))
@@ -760,24 +762,30 @@ do
             self:_Draw('menu_body_border_inner', 'rect', self._theming.border1, 11, bodyContentPos - Vector2.new(1, 1), bodyContentSize + Vector2.new(2, 2), false)
             self:_Draw('menu_body_content', 'rect', self._theming.body, 10, bodyContentPos, bodyContentSize, true)
 
-            -- tabs
+            -- side tabs
             local tabIter = 0
             local tabCount = getDictLength(self._tree)
+            local tabPanelWidth = self._tab_w
+            local tabPanelPos = bodyContentPos
+            local tabPanelSize = Vector2.new(tabPanelWidth, bodyContentSize.y)
+            self:_Draw('menu_tab_panel', 'rect', self._theming.surface0, 11, tabPanelPos, tabPanelSize, true)
+            self:_Draw('menu_tab_panel_border', 'rect', self._theming.border1, 12, tabPanelPos + Vector2.new(tabPanelWidth, 0), Vector2.new(1, tabPanelSize.y), true)
             for tabName, tabContent in pairs(self._tree) do
                 local tabDrawId = 'menu_tab_' .. tostring(tabIter)
-                local tabSize = Vector2.new(bodyContentSize.x / tabCount, self._tab_h)
-                local tabPosition = Vector2.new(bodyContentPos.x + tabSize.x * tabIter, bodyContentPos.y)
+                local tabSize = Vector2.new(tabPanelWidth, self._tab_h)
+                local tabPosition = Vector2.new(tabPanelPos.x, tabPanelPos.y + self._tab_h * tabIter)
                 local isOpen = self._open_tab == tabName
-                if not isOpen then
-                    self:_Draw(tabDrawId .. '_backdrop', 'gradient', nil, 11, 'vertical', tabPosition, tabSize, self._theming.surface1)
-                    self:_Draw(tabDrawId .. '_border_b', 'rect', self._theming.border1, 13, tabPosition + Vector2.new(0, tabSize.y), Vector2.new(tabSize.x, 1), true)
+                if isOpen then
+                    self:_Draw(tabDrawId .. '_backdrop', 'rect', self._theming.body, 13, tabPosition, tabSize, true)
+                    self:_Draw(tabDrawId .. '_accent', 'rect', self._theming.accent, 14, tabPosition, Vector2.new(2, tabSize.y), true)
                 else
                     self:_UndrawStartsWith(tabDrawId .. '_backdrop')
-                    self:_Undraw(tabDrawId .. '_border_b')
+                    self:_Undraw(tabDrawId .. '_accent')
                 end
-                self:_Draw(tabDrawId .. '_text', 'text', self._theming.text, 13, tabPosition + Vector2.new(tabSize.x/2, tabSize.y/2), tabName, true, 'center')
+                local tabTextColor = isOpen and self._theming.text or self._theming.subtext
+                self:_Draw(tabDrawId .. '_text', 'text', tabTextColor, 14, tabPosition + Vector2.new(self._padding + 2, tabSize.y/2), tabName, true, nil)
                 if tabIter ~= tabCount-1 then
-                    self:_Draw(tabDrawId .. '_border_r', 'rect', self._theming.border1, 12, tabPosition + Vector2.new(tabSize.x, 0), Vector2.new(1, tabSize.y + 1), true)
+                    self:_Draw(tabDrawId .. '_border_b', 'rect', self._theming.border0, 13, tabPosition + Vector2.new(0, tabSize.y), Vector2.new(tabPanelWidth, 1), true)
                 end
                 if not isOpen and clickFrame and self:_IsMouseWithinBounds(tabPosition, tabSize) then
                     self._open_tab = tabName
@@ -788,9 +796,11 @@ do
                 local sectionFade = 1 - (self._tab_change_at - (os.clock() - 0.25)) / 0.25
                 if sectionFade < 1.1 then self:_SetOpacityStartsWith('menu_section_', clamp(sectionFade, 0, 1)) end
 
+                local contentAreaX = bodyContentPos.x + tabPanelWidth + 1
+                local contentAreaW = bodyContentSize.x - tabPanelWidth - 1
                 local sectionCount = getDictLength(tabContent._items)
                 local sectionIter = 0
-                local sectionWidth = bodyContentSize.x/2 - self._padding * 1.5
+                local sectionWidth = contentAreaW/2 - self._padding * 1.5
                 local totalSectionHeightR = self._padding * 1.5
                 local totalSectionHeightL = self._padding * 1.5
                 for sectionName, sectionContent in pairs(tabContent._items) do
@@ -798,7 +808,7 @@ do
                     local isLastSection = sectionIter >= sectionCount-2
                     local isSectionMirror = sectionIter % 2 == 1
                     local sectionTitleSize = self:_GetTextBounds(sectionName)
-                    local sectionPos = Vector2.new(bodyContentPos.x + self._padding, bodyContentPos.y + tabSize.y)
+                    local sectionPos = Vector2.new(contentAreaX + self._padding, bodyContentPos.y)
                     local sectionHeight = self._padding + sectionTitleSize.y/2
                     if isSectionMirror then
                         sectionPos = sectionPos + Vector2.new(sectionWidth + self._padding, totalSectionHeightR + sectionTitleSize.y/2)
@@ -1098,8 +1108,8 @@ do
                         if isSectionMirror then totalSectionHeightR = totalSectionHeightR + sectionHeight + sectionTitleSize.y/2
                         else totalSectionHeightL = totalSectionHeightL + sectionHeight + sectionTitleSize.y/2 end
                         if isLastSection then
-                            if isSectionMirror then sectionHeight = bodyContentSize.y - totalSectionHeightR + sectionHeight - self._tab_h - self._padding
-                            else sectionHeight = bodyContentSize.y - totalSectionHeightL + sectionHeight - self._tab_h - self._padding end
+                            if isSectionMirror then sectionHeight = bodyContentSize.y - totalSectionHeightR + sectionHeight - self._padding
+                            else sectionHeight = bodyContentSize.y - totalSectionHeightL + sectionHeight - self._padding end
                         end
                         self:_Draw(sectionDrawId .. '_backdrop', 'rect', self._theming.surface0, 11, sectionPos, Vector2.new(sectionWidth, sectionHeight), true)
                         self:_Draw(sectionDrawId .. '_border', 'rect', self._theming.border0, 12, sectionPos, Vector2.new(sectionWidth, sectionHeight), false)
@@ -1132,7 +1142,7 @@ do
     end
 
     function UILib:ShowDemoMenu()
-        self:SetMenuSize(Vector2.new(400, 500))
+        self:SetMenuSize(Vector2.new(480, 500))
         self:CenterMenu()
 
         local playground = self:Tab('Playground')
