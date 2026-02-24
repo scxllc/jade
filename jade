@@ -702,7 +702,12 @@ do
                         end
                         if dropdown.callback then dropdown.callback(dropdown.value) end
                     end
-                    local choiceColor = choiceFoundIndex and self._theming.accent or self._theming.subtext
+                    local choiceColor = choiceFoundIndex and self._theming.accent or (isHoveringChoice and self._theming.text or self._theming.subtext)
+                    if isHoveringChoice then
+                        self:_Draw('dropdown_choice_bg_' .. tostring(i), 'rect', self._theming.surface1, 101, Vector2.new(dropdownOrigin.x + 2, choiceOrigin.y - 1), Vector2.new(dropdown.width - 4, labelSize.y + 2), true)
+                    else
+                        self:_Undraw('dropdown_choice_bg_' .. tostring(i))
+                    end
                     self:_Draw('dropdown_choice_' .. tostring(i), 'text', choiceColor, 102, choiceOrigin, choice, true)
                     totalHeight = totalHeight + labelSize.y + self._padding
                 end
