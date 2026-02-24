@@ -20,7 +20,7 @@ UILib = {
     _notifications_spawned = 0,
     _open_tab = nil,
     _tab_change_at = 0,
-    _inputs = {['m1']={id=0x01,held=false,click=false},['m2']={id=0x02,held=false,click=false},['mb']={id=0x04,held=false,click=false},['unbound']={id=0x08,held=false,click=false},['tab']={id=0x09,held=false,click=false},['enter']={id=0x0D,held=false,click=false},['shift']={id=0x10,held=false,click=false},['ctrl']={id=0x11,held=false,click=false},['alt']={id=0x12,held=false,click=false},['pause']={id=0x13,held=false,click=false},['capslock']={id=0x14,held=false,click=false},['esc']={id=0x1B,held=false,click=false},['space']={id=0x20,held=false,click=false},['pageup']={id=0x21,held=false,click=false},['pagedown']={id=0x22,held=false,click=false},['end']={id=0x23,held=false,click=false},['home']={id=0x24,held=false,click=false},['left']={id=0x25,held=false,click=false},['up']={id=0x26,held=false,click=false},['right']={id=0x27,held=false,click=false},['down']={id=0x28,held=false,click=false},['insert']={id=0x2D,held=false,click=false},['delete']={id=0x2E,held=false,click=false},['0']={id=0x30,held=false,click=false},['1']={id=0x31,held=false,click=false},['2']={id=0x32,held=false,click=false},['3']={id=0x33,held=false,click=false},['4']={id=0x34,held=false,click=false},['5']={id=0x35,held=false,click=false},['6']={id=0x36,held=false,click=false},['7']={id=0x37,held=false,click=false},['8']={id=0x38,held=false,click=false},['9']={id=0x39,held=false,click=false},['a']={id=0x41,held=false,click=false},['b']={id=0x42,held=false,click=false},['c']={id=0x43,held=false,click=false},['d']={id=0x44,held=false,click=false},['e']={id=0x45,held=false,click=false},['f']={id=0x46,held=false,click=false},['g']={id=0x47,held=false,click=false},['h']={id=0x48,held=false,click=false},['i']={id=0x49,held=false,click=false},['j']={id=0x4A,held=false,click=false},['k']={id=0x4B,held=false,click=false},['l']={id=0x4C,held=false,click=false},['m']={id=0x4D,held=false,click=false},['n']={id=0x4E,held=false,click=false},['o']={id=0x4F,held=false,click=false},['p']={id=0x50,held=false,click=false},['q']={id=0x51,held=false,click=false},['r']={id=0x52,held=false,click=false},['s']={id=0x53,held=false,click=false},['t']={id=0x54,held=false,click=false},['u']={id=0x55,held=false,click=false},['v']={id=0x56,held=false,click=false},['w']={id=0x57,held=false,click=false},['x']={id=0x58,held=false,click=false},['y']={id=0x59,held=false,click=false},['z']={id=0x5A,held=false,click=false},['numpad0']={id=0x60,held=false,click=false},['numpad1']={id=0x61,held=false,click=false},['numpad2']={id=0x62,held=false,click=false},['numpad3']={id=0x63,held=false,click=false},['numpad4']={id=0x64,held=false,click=false},['numpad5']={id=0x65,held=false,click=false},['numpad6']={id=0x66,held=false,click=false},['numpad7']={id=0x67,held=false,click=false},['numpad8']={id=0x68,held=false,click=false},['numpad9']={id=0x69,held=false,click=false},['multiply']={id=0x6A,held=false,click=false},['add']={id=0x6B,held=false,click=false},['separator']={id=0x6C,held=false,click=false},['subtract']={id=0x6D,held=false,click=false},['decimal']={id=0x6E,held=false,click=false},['divide']={id=0x6F,held=false,click=false},['f1']={id=0x70,held=false,click=false},['f2']={id=0x71,held=false,click=false},['f3']={id=0x72,held=false,click=false},['f4']={id=0x73,held=false,click=false},['f5']={id=0x74,held=false,click=false},['f6']={id=0x75,held=false,click=false},['f7']={id=0x76,held=false,click=false},['f8']={id=0x77,held=false,click=false},['f9']={id=0x78,held=false,click=false},['f10']={id=0x79,held=false,click=false},['f11']={id=0x7A,held=false,click=false},['f12']={id=0x7B,held=false,click=false},['numlock']={id=0x90,held=false,click=false},['scrolllock']={id=0x91,held=false,click=false},['lshift']={id=0xA0,held=false,click=false},['rshift']={id=0xA1,held=false,click=false},['lctrl']={id=0xA2,held=false,click=false},['rctrl']={id=0xA3,held=false,click=false},['lalt']={id=0xA4,held=false,click=false},['ralt']={id=0xA5,held=false,click=false},['semicolon']={id=0xBA,held=false,click=false},['plus']={id=0xBB,held=false,click=false},['comma']={id=0xBC,held=false,click=false},['minus']={id=0xBD,held=false,click=false},['period']={id=0xBE,held=false,click=false},['slash']={id=0xBF,held=false,click=false},['tilde']={id=0xC0,held=false,click=false},['lbracket']={id=0xDB,held=false,click=false},['backslash']={id=0xDC,held=false,click=false},['rbracket']={id=0xDD,held=false,click=false},['quote']={id=0xDE,held=false,click=false}},
+    _inputs = {['m1']={id=0x01,held=false,click=false},['m2']={id=0x02,held=false,click=false},['mb']={id=0x04,held=false,click=false},['mouse4']={id=0x05,held=false,click=false},['mouse5']={id=0x06,held=false,click=false},['unbound']={id=0x08,held=false,click=false},['tab']={id=0x09,held=false,click=false},['enter']={id=0x0D,held=false,click=false},['shift']={id=0x10,held=false,click=false},['ctrl']={id=0x11,held=false,click=false},['alt']={id=0x12,held=false,click=false},['pause']={id=0x13,held=false,click=false},['capslock']={id=0x14,held=false,click=false},['esc']={id=0x1B,held=false,click=false},['space']={id=0x20,held=false,click=false},['pageup']={id=0x21,held=false,click=false},['pagedown']={id=0x22,held=false,click=false},['end']={id=0x23,held=false,click=false},['home']={id=0x24,held=false,click=false},['left']={id=0x25,held=false,click=false},['up']={id=0x26,held=false,click=false},['right']={id=0x27,held=false,click=false},['down']={id=0x28,held=false,click=false},['insert']={id=0x2D,held=false,click=false},['delete']={id=0x2E,held=false,click=false},['0']={id=0x30,held=false,click=false},['1']={id=0x31,held=false,click=false},['2']={id=0x32,held=false,click=false},['3']={id=0x33,held=false,click=false},['4']={id=0x34,held=false,click=false},['5']={id=0x35,held=false,click=false},['6']={id=0x36,held=false,click=false},['7']={id=0x37,held=false,click=false},['8']={id=0x38,held=false,click=false},['9']={id=0x39,held=false,click=false},['a']={id=0x41,held=false,click=false},['b']={id=0x42,held=false,click=false},['c']={id=0x43,held=false,click=false},['d']={id=0x44,held=false,click=false},['e']={id=0x45,held=false,click=false},['f']={id=0x46,held=false,click=false},['g']={id=0x47,held=false,click=false},['h']={id=0x48,held=false,click=false},['i']={id=0x49,held=false,click=false},['j']={id=0x4A,held=false,click=false},['k']={id=0x4B,held=false,click=false},['l']={id=0x4C,held=false,click=false},['m']={id=0x4D,held=false,click=false},['n']={id=0x4E,held=false,click=false},['o']={id=0x4F,held=false,click=false},['p']={id=0x50,held=false,click=false},['q']={id=0x51,held=false,click=false},['r']={id=0x52,held=false,click=false},['s']={id=0x53,held=false,click=false},['t']={id=0x54,held=false,click=false},['u']={id=0x55,held=false,click=false},['v']={id=0x56,held=false,click=false},['w']={id=0x57,held=false,click=false},['x']={id=0x58,held=false,click=false},['y']={id=0x59,held=false,click=false},['z']={id=0x5A,held=false,click=false},['numpad0']={id=0x60,held=false,click=false},['numpad1']={id=0x61,held=false,click=false},['numpad2']={id=0x62,held=false,click=false},['numpad3']={id=0x63,held=false,click=false},['numpad4']={id=0x64,held=false,click=false},['numpad5']={id=0x65,held=false,click=false},['numpad6']={id=0x66,held=false,click=false},['numpad7']={id=0x67,held=false,click=false},['numpad8']={id=0x68,held=false,click=false},['numpad9']={id=0x69,held=false,click=false},['multiply']={id=0x6A,held=false,click=false},['add']={id=0x6B,held=false,click=false},['separator']={id=0x6C,held=false,click=false},['subtract']={id=0x6D,held=false,click=false},['decimal']={id=0x6E,held=false,click=false},['divide']={id=0x6F,held=false,click=false},['f1']={id=0x70,held=false,click=false},['f2']={id=0x71,held=false,click=false},['f3']={id=0x72,held=false,click=false},['f4']={id=0x73,held=false,click=false},['f5']={id=0x74,held=false,click=false},['f6']={id=0x75,held=false,click=false},['f7']={id=0x76,held=false,click=false},['f8']={id=0x77,held=false,click=false},['f9']={id=0x78,held=false,click=false},['f10']={id=0x79,held=false,click=false},['f11']={id=0x7A,held=false,click=false},['f12']={id=0x7B,held=false,click=false},['numlock']={id=0x90,held=false,click=false},['scrolllock']={id=0x91,held=false,click=false},['lshift']={id=0xA0,held=false,click=false},['rshift']={id=0xA1,held=false,click=false},['lctrl']={id=0xA2,held=false,click=false},['rctrl']={id=0xA3,held=false,click=false},['lalt']={id=0xA4,held=false,click=false},['ralt']={id=0xA5,held=false,click=false},['semicolon']={id=0xBA,held=false,click=false},['plus']={id=0xBB,held=false,click=false},['comma']={id=0xBC,held=false,click=false},['minus']={id=0xBD,held=false,click=false},['period']={id=0xBE,held=false,click=false},['slash']={id=0xBF,held=false,click=false},['tilde']={id=0xC0,held=false,click=false},['lbracket']={id=0xDB,held=false,click=false},['backslash']={id=0xDC,held=false,click=false},['rbracket']={id=0xDD,held=false,click=false},['quote']={id=0xDE,held=false,click=false}},
     _slider_drag = nil,
     _menu_drag = nil,
     _input_ctx = nil,
@@ -46,13 +46,13 @@ UILib = {
     _theming = {
         accent = Color3.fromRGB(0, 168, 107),
         unsafe = Color3.fromRGB(255, 215, 0),
-        body = Color3.fromRGB(10, 10, 10),
-        text = Color3.fromRGB(220, 220, 220),
-        subtext = Color3.fromRGB(100, 100, 100),
-        border1 = Color3.fromRGB(45, 45, 45),
-        border0 = Color3.fromRGB(35, 35, 35),
-        surface1 = Color3.fromRGB(30, 30, 30),
-        surface0 = Color3.fromRGB(18, 18, 18),
+        body = Color3.fromRGB(6, 6, 6),
+        text = Color3.fromRGB(210, 210, 210),
+        subtext = Color3.fromRGB(80, 80, 80),
+        border1 = Color3.fromRGB(32, 32, 32),
+        border0 = Color3.fromRGB(22, 22, 22),
+        surface1 = Color3.fromRGB(20, 20, 20),
+        surface0 = Color3.fromRGB(12, 12, 12),
         crust = Color3.fromRGB(0, 0, 0),
     },
 }
@@ -509,13 +509,13 @@ do
             if theme == themes[1] then
                 -- jade
                 themingAccentColor:Set(Color3.fromRGB(0, 168, 107))
-                themingBodyColor:Set(Color3.fromRGB(10, 10, 10))
-                themingTextColor:Set(Color3.fromRGB(220, 220, 220))
-                themingSubtextColor:Set(Color3.fromRGB(100, 100, 100))
-                themingBorder1Color:Set(Color3.fromRGB(45, 45, 45))
-                themingBorder0Color:Set(Color3.fromRGB(35, 35, 35))
-                themingSurface1Color:Set(Color3.fromRGB(30, 30, 30))
-                themingSurface0Color:Set(Color3.fromRGB(18, 18, 18))
+                themingBodyColor:Set(Color3.fromRGB(6, 6, 6))
+                themingTextColor:Set(Color3.fromRGB(210, 210, 210))
+                themingSubtextColor:Set(Color3.fromRGB(80, 80, 80))
+                themingBorder1Color:Set(Color3.fromRGB(32, 32, 32))
+                themingBorder0Color:Set(Color3.fromRGB(22, 22, 22))
+                themingSurface1Color:Set(Color3.fromRGB(20, 20, 20))
+                themingSurface0Color:Set(Color3.fromRGB(12, 12, 12))
                 themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
             elseif theme == themes[2] then
                 -- gamesense
@@ -948,7 +948,7 @@ do
                             elseif itemType == 'slider' then
                                 local labelSize = self:_GetTextBounds(sectionItem.label)
                                 local sliderOrigin = Vector2.new(sectionItemOrigin.x + self._padding, sectionItemOrigin.y + labelSize.y + self._padding)
-                                local sliderSize = Vector2.new(sectionWidth - self._padding * 3, 4)
+                                local sliderSize = Vector2.new(sectionWidth - self._padding * 3, 6)
                                 local newValue = itemValue
                                 local isHoveringSlider = self:_IsMouseWithinBounds(sliderOrigin - Vector2.new(2, 6), sliderSize + Vector2.new(4, 12))
                                 if mouseHeld then
@@ -988,14 +988,22 @@ do
                                 -- track background
                                 self:_Draw(sectionItemId .. '_track', 'rect', self._theming.crust, 20, sliderOrigin, sliderSize, true)
                                 self:_Draw(sectionItemId .. '_track_border', 'rect', self._theming.border0, 21, sliderOrigin, sliderSize, false)
-                                -- accent fill
-                                if fillWidth > 1 then
-                                    self:_Draw(sectionItemId .. '_slider', 'rect', self._theming.accent, 22, sliderOrigin + Vector2.new(1, 1), Vector2.new(fillWidth - 2, sliderSize.y - 2), true)
+                                -- gradient accent fill
+                                if fillWidth > 2 then
+                                    local dimAccent = Color3.new(self._theming.accent.R * 0.3, self._theming.accent.G * 0.3, self._theming.accent.B * 0.3)
+                                    self:_Draw(sectionItemId .. '_slider', 'gradient', nil, 22, 'horizontal', sliderOrigin + Vector2.new(1, 1), Vector2.new(fillWidth - 2, sliderSize.y - 2), dimAccent, self._theming.accent)
+                                end
+                                -- thumb notch at fill end
+                                if fillWidth > 0 then
+                                    local thumbX = sliderOrigin.x + fillWidth
+                                    local thumbH = sliderSize.y + 4
+                                    local thumbY = sliderOrigin.y - 2
+                                    self:_Draw(sectionItemId .. '_thumb', 'rect', self._theming.accent, 23, Vector2.new(thumbX - 1, thumbY), Vector2.new(2, thumbH), true)
                                 end
                                 -- value text right-aligned next to label
                                 local displayedValue = tostring(itemValue) .. sectionItem.suffix
                                 local valueTextSize = self:_GetTextBounds(displayedValue, nil, 11)
-                                self:_Draw(sectionItemId .. '_value', 'text', self._theming.subtext, 22, sectionItemOrigin + Vector2.new(sectionWidth - self._padding * 2 - valueTextSize.x, 0), displayedValue, true, nil, 11)
+                                self:_Draw(sectionItemId .. '_value', 'text', self._theming.accent, 22, sectionItemOrigin + Vector2.new(sectionWidth - self._padding * 2 - valueTextSize.x, 0), displayedValue, true, nil, 11)
                                 self:_Draw(sectionItemId .. '_label', 'text', self._theming.text, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
                                 sectionHeight = sectionHeight + labelSize.y + sliderSize.y + self._padding * 3
 
