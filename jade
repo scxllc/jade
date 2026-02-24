@@ -755,6 +755,42 @@ do
             self:_Draw('menu_body', 'rect', self._theming.surface0, 2, Vector2.new(self.x + 1, self.y + 1), Vector2.new(self.w - 2, self.h - 2), true)
             self:_Draw('menu_body_border_outer', 'rect', self._theming.border1, 3, Vector2.new(self.x + 1, self.y + 1), Vector2.new(self.w - 2, self.h - 2), false)
             self:_Draw('menu_title', 'text', self._theming.text, 4, Vector2.new(self.x + self._padding + 1, self.y + self._padding + 2), menuTitle, true)
+            -- heart icon next to title (built from triangles)
+            do
+                local heartX = self.x + self._padding + 1 + menuTitleSize.x + 6
+                local heartY = self.y + self._padding + 2
+                local s = menuTitleSize.y * 0.7
+                local cx = heartX + s/2
+                local cy = heartY + s * 0.35
+                local hc = self._theming.accent
+                -- left lobe
+                self:_Draw('heart_tl1', 'triangle', hc, 5, true,
+                    Vector2.new(cx, cy),
+                    Vector2.new(cx - s*0.5, cy - s*0.35),
+                    Vector2.new(cx - s*0.5, cy + s*0.1))
+                self:_Draw('heart_tl2', 'triangle', hc, 5, true,
+                    Vector2.new(cx, cy),
+                    Vector2.new(cx - s*0.5, cy - s*0.35),
+                    Vector2.new(cx - s*0.15, cy - s*0.4))
+                -- right lobe
+                self:_Draw('heart_tr1', 'triangle', hc, 5, true,
+                    Vector2.new(cx, cy),
+                    Vector2.new(cx + s*0.5, cy - s*0.35),
+                    Vector2.new(cx + s*0.5, cy + s*0.1))
+                self:_Draw('heart_tr2', 'triangle', hc, 5, true,
+                    Vector2.new(cx, cy),
+                    Vector2.new(cx + s*0.5, cy - s*0.35),
+                    Vector2.new(cx + s*0.15, cy - s*0.4))
+                -- bottom point
+                self:_Draw('heart_bl', 'triangle', hc, 5, true,
+                    Vector2.new(cx, cy + s*0.55),
+                    Vector2.new(cx - s*0.5, cy + s*0.1),
+                    Vector2.new(cx, cy))
+                self:_Draw('heart_br', 'triangle', hc, 5, true,
+                    Vector2.new(cx, cy + s*0.55),
+                    Vector2.new(cx + s*0.5, cy + s*0.1),
+                    Vector2.new(cx, cy))
+            end
             self:_Draw('menu_accent_gradient', 'gradient', nil, 4, 'horizontal', Vector2.new(self.x + 2, self.y + 2), Vector2.new(self.w - 4, 2), self._theming.surface0, self._theming.accent, self._theming.surface0)
 
             local bodyContentPos = Vector2.new(self.x + self._padding + 2, self.y + self._padding + menuTitleSize.y + 6)
