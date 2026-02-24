@@ -1069,11 +1069,11 @@ do
                                         Vector2.new(chevronX + 4, chevronY - 2),
                                         Vector2.new(chevronX, chevronY + 3))
                                 else
-                                    -- right arrow ►
+                                    -- left arrow ◄
                                     self:_Draw(sectionItemId .. '_arrow', 'triangle', arrowColor, 22, true,
-                                        Vector2.new(chevronX - 3, chevronY - 4),
-                                        Vector2.new(chevronX - 3, chevronY + 4),
-                                        Vector2.new(chevronX + 3, chevronY))
+                                        Vector2.new(chevronX + 3, chevronY - 4),
+                                        Vector2.new(chevronX + 3, chevronY + 4),
+                                        Vector2.new(chevronX - 3, chevronY))
                                 end
                                 -- value text
                                 local displayedValue = table.concat(itemValue, ', ')
