@@ -755,28 +755,30 @@ do
             self:_Draw('menu_body', 'rect', self._theming.surface0, 2, Vector2.new(self.x + 1, self.y + 1), Vector2.new(self.w - 2, self.h - 2), true)
             self:_Draw('menu_body_border_outer', 'rect', self._theming.border1, 3, Vector2.new(self.x + 1, self.y + 1), Vector2.new(self.w - 2, self.h - 2), false)
             self:_Draw('menu_title', 'text', self._theming.text, 4, Vector2.new(self.x + self._padding + 1, self.y + self._padding + 2), menuTitle, true)
-            -- heart icon next to title (6 filled triangles)
+            -- heart icon next to title (parametric heart curve, triangle fan)
             do
                 local hx = self.x + self._padding + 1 + menuTitleSize.x + 6
                 local hy = self.y + self._padding + 1
-                local s = menuTitleSize.y
+                local s = menuTitleSize.y * 0.5
                 local hc = self._theming.accent
-                -- key points
-                local TL = Vector2.new(hx + s*0.22, hy)           -- left lobe peak
-                local TR = Vector2.new(hx + s*0.78, hy)           -- right lobe peak
-                local TM = Vector2.new(hx + s*0.50, hy + s*0.25) -- center dip
-                local ML = Vector2.new(hx,          hy + s*0.30) -- left widest
-                local MR = Vector2.new(hx + s,      hy + s*0.30) -- right widest
-                local BT = Vector2.new(hx + s*0.50, hy + s*0.95) -- bottom tip
-                -- left lobe
-                self:_Draw('heart_l1', 'triangle', hc, 5, true, TL, ML, TM)
-                self:_Draw('heart_l2', 'triangle', hc, 5, true, TL, ML, Vector2.new(hx, hy + s*0.10))
-                -- right lobe
-                self:_Draw('heart_r1', 'triangle', hc, 5, true, TR, MR, TM)
-                self:_Draw('heart_r2', 'triangle', hc, 5, true, TR, MR, Vector2.new(hx + s, hy + s*0.10))
-                -- bottom
-                self:_Draw('heart_b1', 'triangle', hc, 5, true, ML, TM, BT)
-                self:_Draw('heart_b2', 'triangle', hc, 5, true, MR, TM, BT)
+                local cx = hx + s
+                local cy = hy + s * 0.85
+                -- sample the heart curve: x=16sin^3(t), y=-(13cos(t)-5cos(2t)-2cos(3t)-cos(4t))
+                local pts = {}
+                local segments = 30
+                for i = 0, segments - 1 do
+                    local t = (i / segments) * 2 * math.pi
+                    local st = math.sin(t)
+                    local px = 16 * st * st * st
+                    local py = -(13 * math.cos(t) - 5 * math.cos(2*t) - 2 * math.cos(3*t) - math.cos(4*t))
+                    pts[i+1] = Vector2.new(cx + px * (s / 17), cy + py * (s / 17))
+                end
+                -- draw as triangle fan from center
+                for i = 1, segments do
+                    local j = (i % segments) + 1
+                    self:_Draw('heart_f' .. i, 'triangle', hc, 5, true,
+                        Vector2.new(cx, cy), pts[i], pts[j])
+                end
             end
             self:_Draw('menu_accent_gradient', 'gradient', nil, 4, 'horizontal', Vector2.new(self.x + 2, self.y + 2), Vector2.new(self.w - 4, 2), self._theming.surface0, self._theming.accent, self._theming.surface0)
 
