@@ -895,6 +895,32 @@ do
                                             end
                                         end
                                     end
+                                    -- activate toggle based on bound key + mode
+                                    if not itemKeybind._listening and itemKeybind.value then
+                                        local boundKey = self._inputs[itemKeybind.value]
+                                        if boundKey then
+                                            if itemKeybind.mode == 'Toggle' then
+                                                if boundKey.click then
+                                                    local newValue = not sectionItem.value
+                                                    sectionItem.value = newValue
+                                                    if itemCallback then itemCallback(newValue) end
+                                                end
+                                            elseif itemKeybind.mode == 'Hold' then
+                                                if boundKey.held and not sectionItem.value then
+                                                    sectionItem.value = true
+                                                    if itemCallback then itemCallback(true) end
+                                                elseif not boundKey.held and sectionItem.value then
+                                                    sectionItem.value = false
+                                                    if itemCallback then itemCallback(false) end
+                                                end
+                                            elseif itemKeybind.mode == 'Always' then
+                                                if not sectionItem.value then
+                                                    sectionItem.value = true
+                                                    if itemCallback then itemCallback(true) end
+                                                end
+                                            end
+                                        end
+                                    end
                                     local keybindColor = itemKeybind.value and self._theming.text or self._theming.subtext
                                     self:_Draw(sectionItemId .. '_keybind', 'text', keybindColor, 20, keybindOrigin, keybindText, true, 'left', 10)
                                 elseif itemColorpicker then
