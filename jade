@@ -328,11 +328,12 @@ do
         self:_UndrawStartsWith('colorpicker_')
     end
 
-    function UILib:_SpawnDropdown(position, width, value, choices, multi, callback)
+    function UILib:_SpawnDropdown(position, width, value, choices, multi, callback, sourceId)
         self:_RemoveDropdown()
         local item = {
             position = position, width = width, value = value,
-            choices = choices, multi = multi, callback = callback, _spawned_at = os.clock()
+            choices = choices, multi = multi, callback = callback, _spawned_at = os.clock(),
+            _source_id = sourceId
         }
         self._active_dropdown = item
     end
@@ -1039,23 +1040,36 @@ do
                                 local dropdownOrigin = Vector2.new(sectionItemOrigin.x + self._padding, sectionItemOrigin.y + labelSize.y + self._padding)
                                 local dropdownSize = Vector2.new(sectionWidth - self._padding * 3, labelSize.y + self._padding)
                                 local isHoveringDropdown = self:_IsMouseWithinBounds(dropdownOrigin, dropdownSize)
+                                local isDropdownOpen = self._active_dropdown and self._active_dropdown._source_id == sectionItemId
                                 if clickFrame and isHoveringDropdown then
                                     self:_SpawnDropdown(dropdownOrigin + Vector2.new(0, dropdownSize.y - 1), dropdownSize.x, itemValue, sectionItem.choices, sectionItem.multi, function(newValue)
                                         sectionItem.value = newValue
                                         if itemCallback then itemCallback(newValue) end
-                                    end)
+                                    end, sectionItemId)
                                     clickFrame = false
                                 end
-                                -- dropdown body
-                                self:_Draw(sectionItemId .. '_list', 'rect', self._theming.crust, 20, dropdownOrigin, dropdownSize, true)
-                                self:_Draw(sectionItemId .. '_border', 'rect', self._theming.border0, 21, dropdownOrigin, dropdownSize, false)
-                                -- down chevron (v shape)
+                                -- dropdown body with hover highlight
+                                local ddBodyColor = isHoveringDropdown and self._theming.surface0 or self._theming.crust
+                                local ddBorderColor = isHoveringDropdown and self._theming.accent or self._theming.border0
+                                self:_Draw(sectionItemId .. '_list', 'rect', ddBodyColor, 20, dropdownOrigin, dropdownSize, true)
+                                self:_Draw(sectionItemId .. '_border', 'rect', ddBorderColor, 21, dropdownOrigin, dropdownSize, false)
+                                -- directional arrow: right ► when closed, down ▼ when open
                                 local chevronX = dropdownOrigin.x + dropdownSize.x - self._padding - 4
                                 local chevronY = dropdownOrigin.y + dropdownSize.y/2
-                                self:_Draw(sectionItemId .. '_arrow', 'triangle', self._theming.subtext, 22, true,
-                                    Vector2.new(chevronX - 4, chevronY - 2),
-                                    Vector2.new(chevronX + 4, chevronY - 2),
-                                    Vector2.new(chevronX, chevronY + 3))
+                                local arrowColor = isHoveringDropdown and self._theming.accent or self._theming.subtext
+                                if isDropdownOpen then
+                                    -- down arrow ▼
+                                    self:_Draw(sectionItemId .. '_arrow', 'triangle', arrowColor, 22, true,
+                                        Vector2.new(chevronX - 4, chevronY - 2),
+                                        Vector2.new(chevronX + 4, chevronY - 2),
+                                        Vector2.new(chevronX, chevronY + 3))
+                                else
+                                    -- right arrow ►
+                                    self:_Draw(sectionItemId .. '_arrow', 'triangle', arrowColor, 22, true,
+                                        Vector2.new(chevronX - 3, chevronY - 4),
+                                        Vector2.new(chevronX - 3, chevronY + 4),
+                                        Vector2.new(chevronX + 3, chevronY))
+                                end
                                 -- value text
                                 local displayedValue = table.concat(itemValue, ', ')
                                 local valueSize = self:_GetTextBounds(displayedValue)
