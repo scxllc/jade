@@ -46,14 +46,14 @@ UILib = {
     _theming = {
         accent = Color3.fromRGB(0, 168, 107),
         unsafe = Color3.fromRGB(255, 215, 0),
-        body = Color3.fromRGB(8, 12, 10),
-        text = Color3.fromRGB(232, 232, 232),
-        subtext = Color3.fromRGB(90, 105, 95),
-        border1 = Color3.fromRGB(30, 42, 34),
-        border0 = Color3.fromRGB(20, 30, 24),
-        surface1 = Color3.fromRGB(28, 38, 32),
-        surface0 = Color3.fromRGB(14, 20, 16),
-        crust = Color3.fromRGB(2, 5, 3),
+        body = Color3.fromRGB(10, 10, 10),
+        text = Color3.fromRGB(220, 220, 220),
+        subtext = Color3.fromRGB(100, 100, 100),
+        border1 = Color3.fromRGB(45, 45, 45),
+        border0 = Color3.fromRGB(35, 35, 35),
+        surface1 = Color3.fromRGB(30, 30, 30),
+        surface0 = Color3.fromRGB(18, 18, 18),
+        crust = Color3.fromRGB(0, 0, 0),
     },
 }
 
@@ -509,14 +509,14 @@ do
             if theme == themes[1] then
                 -- jade
                 themingAccentColor:Set(Color3.fromRGB(0, 168, 107))
-                themingBodyColor:Set(Color3.fromRGB(8, 12, 10))
-                themingTextColor:Set(Color3.fromRGB(232, 232, 232))
-                themingSubtextColor:Set(Color3.fromRGB(90, 105, 95))
-                themingBorder1Color:Set(Color3.fromRGB(30, 42, 34))
-                themingBorder0Color:Set(Color3.fromRGB(20, 30, 24))
-                themingSurface1Color:Set(Color3.fromRGB(28, 38, 32))
-                themingSurface0Color:Set(Color3.fromRGB(14, 20, 16))
-                themingCrustColor:Set(Color3.fromRGB(2, 5, 3))
+                themingBodyColor:Set(Color3.fromRGB(10, 10, 10))
+                themingTextColor:Set(Color3.fromRGB(220, 220, 220))
+                themingSubtextColor:Set(Color3.fromRGB(100, 100, 100))
+                themingBorder1Color:Set(Color3.fromRGB(45, 45, 45))
+                themingBorder0Color:Set(Color3.fromRGB(35, 35, 35))
+                themingSurface1Color:Set(Color3.fromRGB(30, 30, 30))
+                themingSurface0Color:Set(Color3.fromRGB(18, 18, 18))
+                themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
             elseif theme == themes[2] then
                 -- gamesense
                 themingAccentColor:Set(Color3.fromRGB(114, 178, 21))
@@ -947,11 +947,10 @@ do
 
                             elseif itemType == 'slider' then
                                 local labelSize = self:_GetTextBounds(sectionItem.label)
-                                local extraPadding = self._font_size
-                                local sliderOrigin = Vector2.new(sectionItemOrigin.x + extraPadding + self._padding, sectionItemOrigin.y + labelSize.y + self._padding)
-                                local sliderSize = Vector2.new(sectionWidth - extraPadding * 2 - self._padding * 3, 6)
+                                local sliderOrigin = Vector2.new(sectionItemOrigin.x + self._padding, sectionItemOrigin.y + labelSize.y + self._padding)
+                                local sliderSize = Vector2.new(sectionWidth - self._padding * 3, 4)
                                 local newValue = itemValue
-                                local isHoveringSlider = self:_IsMouseWithinBounds(sliderOrigin - Vector2.new(4, 4), sliderSize + Vector2.new(8, 8))
+                                local isHoveringSlider = self:_IsMouseWithinBounds(sliderOrigin - Vector2.new(2, 6), sliderSize + Vector2.new(4, 12))
                                 if mouseHeld then
                                     if isHoveringSlider and clickFrame then
                                         self._slider_drag = sectionItemId
@@ -968,12 +967,10 @@ do
                                 else
                                     self._slider_drag = nil
                                 end
-                                local buttonSize = Vector2.new(self._font_size, self._font_size)
-                                local decreaseOrigin = sliderOrigin - Vector2.new(extraPadding + self._padding, labelSize.y - self._padding - 1)
-                                local increaseOrigin = sliderOrigin + Vector2.new(sliderSize.x + self._padding - 4, -labelSize.y + self._padding + 1)
-                                self:_Draw(sectionItemId .. '_decrease', 'text', self._theming.text, 20, decreaseOrigin + Vector2.new(buttonSize.x/2, buttonSize.y/2), '-', true, 'center')
-                                self:_Draw(sectionItemId .. '_increase', 'text', self._theming.text, 20, increaseOrigin + Vector2.new(buttonSize.x/2, buttonSize.y/2), '+', true, 'center')
                                 if clickFrame then
+                                    local buttonSize = Vector2.new(self._font_size, self._font_size)
+                                    local decreaseOrigin = sectionItemOrigin
+                                    local increaseOrigin = sectionItemOrigin + Vector2.new(sectionWidth - self._padding * 2 - buttonSize.x, 0)
                                     if self:_IsMouseWithinBounds(decreaseOrigin, buttonSize) then
                                         newValue = clamp(itemValue - sectionItem.step, sectionItem.min, sectionItem.max)
                                         clickFrame = false
@@ -987,19 +984,25 @@ do
                                     if itemCallback then itemCallback(newValue) end
                                 end
                                 local fillPercent = (itemValue - (sectionItem.min or 0)) / ((sectionItem.max or 1) - (sectionItem.min or 0))
-                                local tickColor = self._theming.accent
-                                self:_Draw(sectionItemId .. '_slider', 'gradient', nil, 20, 'vertical', sliderOrigin + Vector2.new(1, 1), Vector2.new(sliderSize.x * fillPercent - 2, sliderSize.y - 2), tickColor)
+                                local fillWidth = math.max(0, sliderSize.x * fillPercent)
+                                -- track background
+                                self:_Draw(sectionItemId .. '_track', 'rect', self._theming.crust, 20, sliderOrigin, sliderSize, true)
+                                self:_Draw(sectionItemId .. '_track_border', 'rect', self._theming.border0, 21, sliderOrigin, sliderSize, false)
+                                -- accent fill
+                                if fillWidth > 1 then
+                                    self:_Draw(sectionItemId .. '_slider', 'rect', self._theming.accent, 22, sliderOrigin + Vector2.new(1, 1), Vector2.new(fillWidth - 2, sliderSize.y - 2), true)
+                                end
+                                -- value text right-aligned next to label
                                 local displayedValue = tostring(itemValue) .. sectionItem.suffix
-                                self:_Draw(sectionItemId .. '_value', 'text', self._theming.text, 22, sliderOrigin + Vector2.new(sliderSize.x * fillPercent, sliderSize.y), displayedValue, true, 'center', 12)
-                                self:_Draw(sectionItemId .. '_border', 'rect', self._theming.crust, 21, sliderOrigin, sliderSize, false)
-                                self:_Draw(sectionItemId .. '_label', 'text', self._theming.text, 20, sectionItemOrigin + Vector2.new(self._padding + extraPadding, 0), sectionItem.label, true)
+                                local valueTextSize = self:_GetTextBounds(displayedValue, nil, 11)
+                                self:_Draw(sectionItemId .. '_value', 'text', self._theming.subtext, 22, sectionItemOrigin + Vector2.new(sectionWidth - self._padding * 2 - valueTextSize.x, 0), displayedValue, true, nil, 11)
+                                self:_Draw(sectionItemId .. '_label', 'text', self._theming.text, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
                                 sectionHeight = sectionHeight + labelSize.y + sliderSize.y + self._padding * 3
 
                             elseif itemType == 'dropdown' then
                                 local labelSize = self:_GetTextBounds(sectionItem.label)
-                                local extraPadding = self._font_size
-                                local dropdownOrigin = Vector2.new(sectionItemOrigin.x + extraPadding + self._padding, sectionItemOrigin.y + labelSize.y + self._padding)
-                                local dropdownSize = Vector2.new(sectionWidth - extraPadding * 2 - self._padding * 3, labelSize.y + self._padding)
+                                local dropdownOrigin = Vector2.new(sectionItemOrigin.x + self._padding, sectionItemOrigin.y + labelSize.y + self._padding)
+                                local dropdownSize = Vector2.new(sectionWidth - self._padding * 3, labelSize.y + self._padding)
                                 local isHoveringDropdown = self:_IsMouseWithinBounds(dropdownOrigin, dropdownSize)
                                 if clickFrame and isHoveringDropdown then
                                     self:_SpawnDropdown(dropdownOrigin + Vector2.new(0, dropdownSize.y - 1), dropdownSize.x, itemValue, sectionItem.choices, sectionItem.multi, function(newValue)
@@ -1008,27 +1011,30 @@ do
                                     end)
                                     clickFrame = false
                                 end
-                                local dropdownColor = self._theming.surface0
-                                self:_Draw(sectionItemId .. '_list', 'gradient', nil, 20, 'vertical', dropdownOrigin, dropdownSize, dropdownColor)
-                                self:_Draw(sectionItemId .. '_arrow', 'triangle', self._theming.text, 21, true,
-                                    dropdownOrigin + Vector2.new(dropdownSize.x - self._padding - 6, dropdownSize.y/2),
-                                    dropdownOrigin + Vector2.new(dropdownSize.x - self._padding, dropdownSize.y/2 + 4),
-                                    dropdownOrigin + Vector2.new(dropdownSize.x - self._padding, dropdownSize.y/2 - 4))
+                                -- dropdown body
+                                self:_Draw(sectionItemId .. '_list', 'rect', self._theming.crust, 20, dropdownOrigin, dropdownSize, true)
+                                self:_Draw(sectionItemId .. '_border', 'rect', self._theming.border0, 21, dropdownOrigin, dropdownSize, false)
+                                -- down chevron (v shape)
+                                local chevronX = dropdownOrigin.x + dropdownSize.x - self._padding - 4
+                                local chevronY = dropdownOrigin.y + dropdownSize.y/2
+                                self:_Draw(sectionItemId .. '_arrow', 'triangle', self._theming.subtext, 22, true,
+                                    Vector2.new(chevronX - 4, chevronY - 2),
+                                    Vector2.new(chevronX + 4, chevronY - 2),
+                                    Vector2.new(chevronX, chevronY + 3))
+                                -- value text
                                 local displayedValue = table.concat(itemValue, ', ')
                                 local valueSize = self:_GetTextBounds(displayedValue)
-                                if valueSize.x > dropdownSize.x - self._padding - 10 then
+                                if valueSize.x > dropdownSize.x - self._padding * 2 - 12 then
                                     displayedValue = tostring(#itemValue) .. ' item' .. (#itemValue == 1 and '' or 's')
                                 end
-                                self:_Draw(sectionItemId .. '_value', 'text', self._theming.text, 21, dropdownOrigin + Vector2.new(4, valueSize.y/2 - 2), displayedValue, true)
-                                self:_Draw(sectionItemId .. '_border', 'rect', self._theming.crust, 21, dropdownOrigin, dropdownSize, false)
-                                self:_Draw(sectionItemId .. '_label', 'text', self._theming.text, 20, sectionItemOrigin + Vector2.new(self._padding + extraPadding, 0), sectionItem.label, true)
+                                self:_Draw(sectionItemId .. '_value', 'text', self._theming.text, 22, dropdownOrigin + Vector2.new(self._padding, valueSize.y/2 - 2), displayedValue, true)
+                                self:_Draw(sectionItemId .. '_label', 'text', self._theming.text, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
                                 sectionHeight = sectionHeight + labelSize.y + dropdownSize.y + self._padding * 3
 
                             elseif itemType == 'button' then
                                 local labelSize = self:_GetTextBounds(sectionItem.label)
-                                local extraPadding = self._font_size
-                                local buttonOrigin = Vector2.new(sectionItemOrigin.x + extraPadding + self._padding, sectionItemOrigin.y)
-                                local buttonSize = Vector2.new(sectionWidth - extraPadding * 2 - self._padding * 3, labelSize.y + self._padding)
+                                local buttonOrigin = Vector2.new(sectionItemOrigin.x + self._padding, sectionItemOrigin.y)
+                                local buttonSize = Vector2.new(sectionWidth - self._padding * 3, labelSize.y + self._padding)
                                 local isHoveringButton = self:_IsMouseWithinBounds(buttonOrigin, buttonSize)
                                 if mouseHeld then
                                     if isHoveringButton and clickFrame then
@@ -1040,14 +1046,18 @@ do
                                     self._slider_drag = nil
                                 end
                                 local isClicked = mouseHeld and self._slider_drag == sectionItemId
-                                local buttonColor = isClicked and self._theming.crust or self._theming.surface1
-                                local tintColor = isClicked and self._theming.surface1 or self._theming.crust
-                                self:_Draw(sectionItemId .. '_body', 'gradient', nil, 20, 'vertical', buttonOrigin, buttonSize, buttonColor, Color3.new(
-                                    self:_Lerp(buttonColor.R, tintColor.R, 0.5),
-                                    self:_Lerp(buttonColor.G, tintColor.G, 0.5),
-                                    self:_Lerp(buttonColor.B, tintColor.B, 0.5)))
-                                self:_Draw(sectionItemId .. '_border', 'rect', self._theming.crust, 21, buttonOrigin, buttonSize, false)
-                                self:_Draw(sectionItemId .. '_text', 'text', self._theming.text, 21, buttonOrigin + Vector2.new(buttonSize.x/2, buttonSize.y/2), sectionItem.label, true, 'center')
+                                -- button body
+                                local buttonColor = isClicked and self._theming.surface1 or self._theming.crust
+                                self:_Draw(sectionItemId .. '_body', 'rect', buttonColor, 20, buttonOrigin, buttonSize, true)
+                                self:_Draw(sectionItemId .. '_border', 'rect', self._theming.border0, 21, buttonOrigin, buttonSize, false)
+                                -- accent left bar when clicked
+                                if isClicked then
+                                    self:_Draw(sectionItemId .. '_accent', 'rect', self._theming.accent, 22, buttonOrigin, Vector2.new(2, buttonSize.y), true)
+                                else
+                                    self:_Undraw(sectionItemId .. '_accent')
+                                end
+                                local textColor = isHoveringButton and self._theming.accent or self._theming.text
+                                self:_Draw(sectionItemId .. '_text', 'text', textColor, 22, buttonOrigin + Vector2.new(buttonSize.x/2, buttonSize.y/2), sectionItem.label, true, 'center')
                                 sectionHeight = sectionHeight + buttonSize.y + self._padding * 2
 
                             elseif itemType == 'textbox' then
