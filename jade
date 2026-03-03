@@ -202,7 +202,7 @@ do
             local lineFrom, lineTo, lineThickness = ...
             draw.From = lineFrom
             draw.To = lineTo
-            draw.Filled = lineThickness or 1
+            draw.Thickness = lineThickness or 1
         elseif drawType == 'triangle' then
             if not draw then
                 self._drawings[drawId] = Drawing.new('Triangle')
@@ -916,7 +916,47 @@ do
                     Vector2.new(hx + s * 1.05 + r, hy + r),
                     Vector2.new(hx + s * 0.7, hy + s * 1.5))
             end
-            self:_Draw('menu_accent_gradient', 'gradient', nil, 4, 'horizontal', Vector2.new(self.x + 2, self.y + 2), Vector2.new(self.w - 4, 2), self._theming.surface0, self._theming.accent, self._theming.surface0)
+            -- snake border animation (smoothly travels around the perimeter)
+            do
+                local borderW, borderH = self.w - 4, self.h - 4
+                local perimeter = borderW * 2 + borderH * 2
+                local snakeLen = perimeter * 0.20 -- 20% of perimeter
+                local speed = 0.65 -- rotations per second
+                local t = (os.clock() * speed) % 1
+                local tailPos = t * perimeter
+                local segments = 12
+
+                local function getPos(p)
+                    p = p % perimeter
+                    if p < borderW then -- Top
+                        return Vector2.new(self.x + 2 + p, self.y + 2)
+                    elseif p < borderW + borderH then -- Right
+                        return Vector2.new(self.x + 2 + borderW, self.y + 2 + (p - borderW))
+                    elseif p < borderW * 2 + borderH then -- Bottom
+                        return Vector2.new(self.x + 2 + borderW - (p - (borderW + borderH)), self.y + 2 + borderH)
+                    else -- Left
+                        return Vector2.new(self.x + 2, self.y + 2 + borderH - (p - (borderW * 2 + borderH)))
+                    end
+                end
+
+                for i = 1, segments do
+                    local p1 = tailPos + (i-1) * (snakeLen / segments)
+                    local p2 = tailPos + i * (snakeLen / segments)
+                    
+                    local pos1 = getPos(p1)
+                    local pos2 = getPos(p2)
+                    
+                    -- Check for wrapping jumps (corner crossings are small, side crossings are large)
+                    if (pos2 - pos1).Magnitude < perimeter / 2 then
+                        self:_Draw('menu_accent_snake_' .. i, 'line', self._theming.accent, 4, pos1, pos2, 2)
+                    else
+                        -- Segment crosses the wrap-around point (0 perimeter)
+                        -- For simplicity with lines, we just hide this specific segment if it jumps
+                        -- (With 12 segments, the gap is tiny and barely noticeable)
+                        self:_Undraw('menu_accent_snake_' .. i)
+                    end
+                end
+            end
 
             local bodyContentPos = Vector2.new(self.x + self._padding + 2, self.y + self._padding + menuTitleSize.y + 6)
             local bodyContentSize = Vector2.new(self.w - self._padding * 2 - 4, self.h - self._padding * 2 - menuTitleSize.y - 8)
