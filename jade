@@ -2,7 +2,10 @@
 
     jade ui library
     forked from nulare's library
-    67% vibe coded
+    by @scxllc on discord
+
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/scxllc/jade/main/jade.lua'))()
+
 ]]
 
 UILib = {
@@ -10,6 +13,7 @@ UILib = {
     _font_size = 13,
     _drawings = {},
     _tree = {},
+    _tab_order = {},
     _menu_open = true,
     _menu_toggled_at = 0,
     _watermark_enabled = true,
@@ -341,11 +345,12 @@ do
         self:_UndrawStartsWith('dropdown_')
     end
 
-    function UILib:_Toggle(tabName, sectionName, label, value, callback, unsafe, tooltip)
+    function UILib:_Toggle(tabName, sectionName, label, value, callback, unsafe, tooltip, miniTab)
         local itemId = #self._tree[tabName]._items[sectionName]._items + 1
         local item = {
             type_ = 'toggle', label = label, value = value,
             callback = callback, unsafe = unsafe or false, tooltip = tooltip,
+            _mini_tab = miniTab,
         }
         table.insert(self._tree[tabName]._items[sectionName]._items, item)
         return {
@@ -393,11 +398,12 @@ do
         }
     end
 
-    function UILib:_Slider(tabName, sectionName, label, value, step, min, max, suffix, callback)
+    function UILib:_Slider(tabName, sectionName, label, value, step, min, max, suffix, callback, miniTab)
         local itemId = #self._tree[tabName]._items[sectionName]._items + 1
         local item = {
             type_ = 'slider', label = label, value = value, step = step,
-            min = min, max = max, suffix = suffix or '', callback = callback
+            min = min, max = max, suffix = suffix or '', callback = callback,
+            _mini_tab = miniTab,
         }
         table.insert(self._tree[tabName]._items[sectionName]._items, item)
         return {
@@ -413,11 +419,12 @@ do
         }
     end
 
-    function UILib:_Dropdown(tabName, sectionName, label, value, choices, multi, callback)
+    function UILib:_Dropdown(tabName, sectionName, label, value, choices, multi, callback, miniTab)
         local itemId = #self._tree[tabName]._items[sectionName]._items + 1
         local item = {
             type_ = 'dropdown', label = label, value = value,
-            choices = choices, multi = multi, callback = callback
+            choices = choices, multi = multi, callback = callback,
+            _mini_tab = miniTab,
         }
         table.insert(self._tree[tabName]._items[sectionName]._items, item)
         return {
@@ -436,9 +443,9 @@ do
         }
     end
 
-    function UILib:_Button(tabName, sectionName, label, callback)
+    function UILib:_Button(tabName, sectionName, label, callback, miniTab)
         local itemId = #self._tree[tabName]._items[sectionName]._items + 1
-        local item = { type_ = 'button', label = label, callback = callback }
+        local item = { type_ = 'button', label = label, callback = callback, _mini_tab = miniTab }
         table.insert(self._tree[tabName]._items[sectionName]._items, item)
         return {
             SetTextColor = function(_, color)
@@ -447,11 +454,12 @@ do
         }
     end
 
-    function UILib:_Textbox(tabName, sectionName, label, value, callback)
+    function UILib:_Textbox(tabName, sectionName, label, value, callback, miniTab)
         local itemId = #self._tree[tabName]._items[sectionName]._items + 1
         local item = {
             type_ = 'textbox', label = label, value = value,
-            autocomplete = autocomplete, callback = callback
+            autocomplete = autocomplete, callback = callback,
+            _mini_tab = miniTab,
         }
         table.insert(self._tree[tabName]._items[sectionName]._items, item)
         return {
@@ -469,6 +477,7 @@ do
 
     function UILib:_Section(tabName, sectionName)
         self._tree[tabName]._items[sectionName] = { _items = {} }
+        table.insert(self._tree[tabName]._section_order, sectionName)
         return {
             Toggle = function(_, ...) return self:_Toggle(tabName, sectionName, ...) end,
             Slider = function(_, ...) return self:_Slider(tabName, sectionName, ...) end,
@@ -476,6 +485,38 @@ do
             Button = function(_, ...) return self:_Button(tabName, sectionName, ...) end,
             Textbox = function(_, ...) return self:_Textbox(tabName, sectionName, ...) end,
         }
+    end
+
+    function UILib:_TabbedSection(tabName, miniTabNames)
+        -- internal section name is the joined mini tab names
+        local sectionName = table.concat(miniTabNames, '|')
+        self._tree[tabName]._items[sectionName] = {
+            _items = {},
+            _mini_tabs = miniTabNames,
+            _active_mini_tab = miniTabNames[1],
+        }
+        table.insert(self._tree[tabName]._section_order, sectionName)
+        local result = {}
+        for _, mtName in ipairs(miniTabNames) do
+            result[mtName] = {
+                Toggle = function(_, label, value, callback, unsafe, tooltip)
+                    return self:_Toggle(tabName, sectionName, label, value, callback, unsafe, tooltip, mtName)
+                end,
+                Slider = function(_, label, value, step, min, max, suffix, callback)
+                    return self:_Slider(tabName, sectionName, label, value, step, min, max, suffix, callback, mtName)
+                end,
+                Dropdown = function(_, label, value, choices, multi, callback)
+                    return self:_Dropdown(tabName, sectionName, label, value, choices, multi, callback, mtName)
+                end,
+                Button = function(_, label, callback)
+                    return self:_Button(tabName, sectionName, label, callback, mtName)
+                end,
+                Textbox = function(_, label, value, callback)
+                    return self:_Textbox(tabName, sectionName, label, value, callback, mtName)
+                end,
+            }
+        end
+        return result
     end
 
     function UILib:GetMenuSize() return Vector2.new(self.w, self.h) end
@@ -496,11 +537,18 @@ do
         self._notifications_spawned = self._notifications_spawned + 1
     end
 
+    function UILib:SetTabOrder(order)
+        self._tab_order = order
+    end
+
     function UILib:Tab(tabName)
-        self._tree[tabName] = { _items = {} }
+        self._tree[tabName] = { _items = {}, _section_order = {} }
+        table.insert(self._tab_order, tabName)
         if not self._open_tab then self._open_tab = tabName end
         return {
-            Section = function(_, sectionName) return self:_Section(tabName, sectionName) end
+            Section = function(_, sectionName) return self:_Section(tabName, sectionName) end,
+            TabbedSection = function(_, miniTabNames) return self:_TabbedSection(tabName, miniTabNames) end,
+            SetSectionOrder = function(_, order) self._tree[tabName]._section_order = order end,
         }
     end
 
@@ -856,13 +904,14 @@ do
 
             -- side tabs
             local tabIter = 0
-            local tabCount = getDictLength(self._tree)
+            local tabCount = #self._tab_order
             local tabPanelWidth = self._tab_w
             local tabPanelPos = bodyContentPos
             local tabPanelSize = Vector2.new(tabPanelWidth, bodyContentSize.y)
             self:_Draw('menu_tab_panel', 'rect', self._theming.surface0, 11, tabPanelPos, tabPanelSize, true)
             self:_Draw('menu_tab_panel_border', 'rect', self._theming.border1, 12, tabPanelPos + Vector2.new(tabPanelWidth, 0), Vector2.new(1, tabPanelSize.y), true)
-            for tabName, tabContent in pairs(self._tree) do
+            for _, tabName in ipairs(self._tab_order) do
+                local tabContent = self._tree[tabName]
                 local tabDrawId = 'menu_tab_' .. tostring(tabIter)
                 local dynamicTabH = clamp(math.floor(bodyContentSize.y / math.max(tabCount, 1)), 24, 40)
                 local tabSize = Vector2.new(tabPanelWidth, dynamicTabH)
@@ -891,16 +940,18 @@ do
 
                 local contentAreaX = bodyContentPos.x + tabPanelWidth + 1
                 local contentAreaW = bodyContentSize.x - tabPanelWidth - 1
-                local sectionCount = getDictLength(tabContent._items)
+                local sectionCount = #tabContent._section_order
                 local sectionIter = 0
                 local sectionWidth = contentAreaW/2 - self._padding * 1.5
                 local totalSectionHeightR = self._padding * 1.5
                 local totalSectionHeightL = self._padding * 1.5
-                for sectionName, sectionContent in pairs(tabContent._items) do
+                for _, sectionName in ipairs(tabContent._section_order) do
+                    local sectionContent = tabContent._items[sectionName]
                     local sectionDrawId = 'menu_section_' .. tostring(sectionIter) .. '_' .. tostring(tabIter)
                     local isLastSection = sectionIter >= sectionCount-2
                     local isSectionMirror = sectionIter % 2 == 1
                     local sectionTitleSize = self:_GetTextBounds(sectionName)
+                    local hasMiniTabs = sectionContent._mini_tabs ~= nil
                     local sectionPos = Vector2.new(contentAreaX + self._padding, bodyContentPos.y)
                     local sectionHeight = self._padding + sectionTitleSize.y/2
                     if isSectionMirror then
@@ -910,9 +961,38 @@ do
                     end
 
                     if isOpen then
-                        self:_Draw(sectionDrawId .. '_title', 'text', self._theming.text, 20, sectionPos + Vector2.new(self._padding, -menuTitleSize.y/2), sectionName, true)
+                        -- render section header: mini tabs or plain title
+                        if hasMiniTabs then
+                            local mtX = sectionPos.x + self._padding
+                            local mtY = sectionPos.y - menuTitleSize.y/2
+                            for mtIdx, mtName in ipairs(sectionContent._mini_tabs) do
+                                local mtDrawId = sectionDrawId .. '_mt_' .. tostring(mtIdx)
+                                local mtSize = self:_GetTextBounds(mtName)
+                                local isActiveMT = sectionContent._active_mini_tab == mtName
+                                local isHoveringMT = self:_IsMouseWithinBounds(Vector2.new(mtX, mtY), mtSize)
+                                local mtColor = isActiveMT and self._theming.text or self._theming.subtext
+                                self:_Draw(mtDrawId .. '_label', 'text', mtColor, 20, Vector2.new(mtX, mtY), mtName, true)
+                                if isActiveMT then
+                                    self:_Draw(mtDrawId .. '_underline', 'rect', self._theming.accent, 21, Vector2.new(mtX, mtY + mtSize.y + 1), Vector2.new(mtSize.x, 1), true)
+                                else
+                                    self:_Undraw(mtDrawId .. '_underline')
+                                end
+                                if isHoveringMT and clickFrame then
+                                    sectionContent._active_mini_tab = mtName
+                                    clickFrame = false
+                                end
+                                mtX = mtX + mtSize.x + self._padding
+                            end
+                        else
+                            self:_Draw(sectionDrawId .. '_title', 'text', self._theming.text, 20, sectionPos + Vector2.new(self._padding, -menuTitleSize.y/2), sectionName, true)
+                        end
 
                         for sectionItemIter, sectionItem in ipairs(sectionContent._items) do
+                            -- skip items not belonging to the active mini tab
+                            if hasMiniTabs and sectionItem._mini_tab ~= sectionContent._active_mini_tab then
+                                self:_UndrawStartsWith(sectionDrawId .. '_item_' .. tostring(sectionItemIter))
+                                goto continue_item
+                            end
                             local sectionItemId = sectionDrawId .. '_item_' .. tostring(sectionItemIter)
                             local sectionItemOrigin = Vector2.new(sectionPos.x + self._padding, sectionPos.y + sectionHeight)
                             local itemType = sectionItem.type_
@@ -1215,6 +1295,7 @@ do
                                 self:_Draw(sectionItemId .. '_body', 'rect', self._theming.crust, 21, textboxOrigin, textboxSize, true)
                                 sectionHeight = sectionHeight + textboxSize.y + self._padding
                             end
+                            ::continue_item::
                         end
 
                         if isSectionMirror then totalSectionHeightR = totalSectionHeightR + sectionHeight + sectionTitleSize.y/2
@@ -1328,7 +1409,16 @@ do
             animToggle:Set(false)
         end)
 
-        playground:Section('Section 3')
+        -- tabbed section demo (mini tabs)
+        local tabbedDemo = playground:TabbedSection({'Farming', 'Auto', 'Events'})
+        tabbedDemo['Farming']:Toggle('Auto Farm', false)
+        tabbedDemo['Farming']:Dropdown('Farm Mode', {'Nearest'}, {'Nearest', 'Furthest', 'Weakest'}, false)
+        tabbedDemo['Auto']:Toggle('Auto Chest', false)
+        tabbedDemo['Auto']:Toggle('Auto Quest', false)
+        tabbedDemo['Auto']:Slider('Speed', 100, 10, 0, 500, '%')
+        tabbedDemo['Events']:Toggle('Sea Events', false)
+        tabbedDemo['Events']:Button('Force Join', function() end)
+
         playground:Section('Section 4')
 
         self:Tab('Another tab')
