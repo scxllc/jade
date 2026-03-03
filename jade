@@ -916,15 +916,15 @@ do
                     Vector2.new(hx + s * 1.05 + r, hy + r),
                     Vector2.new(hx + s * 0.7, hy + s * 1.5))
             end
-            -- snake border animation (smoothly travels around the perimeter)
+            -- RGB flow border animation (smoothly travels around the perimeter with gradient)
             do
                 local borderW, borderH = self.w - 4, self.h - 4
                 local perimeter = borderW * 2 + borderH * 2
-                local snakeLen = perimeter * 0.20 -- 20% of perimeter
-                local speed = 0.65 -- rotations per second
+                local snakeLen = perimeter * 0.25 -- 25% of perimeter for a nice tail
+                local speed = 0.25 -- slower rotation for a smooth flow
                 local t = (os.clock() * speed) % 1
-                local tailPos = t * perimeter
-                local segments = 12
+                local tailPosBase = t * perimeter
+                local segments = 40 -- high segment count for smooth gradient and corner tracking
 
                 local function getPos(p)
                     p = p % perimeter
@@ -939,21 +939,29 @@ do
                     end
                 end
 
+                local baseColor = self._theming.accent
+                local tailColor = Color3.fromRGB(15, 15, 15) -- blackish
+
                 for i = 1, segments do
-                    local p1 = tailPos + (i-1) * (snakeLen / segments)
-                    local p2 = tailPos + i * (snakeLen / segments)
+                    local p1 = tailPosBase + (i-1) * (snakeLen / segments)
+                    local p2 = tailPosBase + i * (snakeLen / segments)
                     
                     local pos1 = getPos(p1)
                     local pos2 = getPos(p2)
                     
+                    -- Calculate gradient color for this segment
+                    local ratio = i / segments
+                    local segmentColor = Color3.new(
+                        tailColor.R + (baseColor.R - tailColor.R) * ratio,
+                        tailColor.G + (baseColor.G - tailColor.G) * ratio,
+                        tailColor.B + (baseColor.B - tailColor.B) * ratio
+                    )
+                    
                     -- Check for wrapping jumps (corner crossings are small, side crossings are large)
                     local dx, dy = pos2.x - pos1.x, pos2.y - pos1.y
                     if (dx*dx + dy*dy)^0.5 < perimeter / 2 then
-                        self:_Draw('menu_accent_snake_' .. i, 'line', self._theming.accent, 4, pos1, pos2, 2)
+                        self:_Draw('menu_accent_snake_' .. i, 'line', segmentColor, 4, pos1, pos2, 2)
                     else
-                        -- Segment crosses the wrap-around point (0 perimeter)
-                        -- For simplicity with lines, we just hide this specific segment if it jumps
-                        -- (With 12 segments, the gap is tiny and barely noticeable)
                         self:_Undraw('menu_accent_snake_' .. i)
                     end
                 end
