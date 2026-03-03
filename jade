@@ -956,12 +956,8 @@ do
                     self._input_ctx = nil
                 end
 
-                local sectionFadeRaw = (os.clock() - self._tab_change_at) / 0.3
-                if sectionFadeRaw < 1.1 then
-                    local sf = clamp(sectionFadeRaw, 0, 1)
-                    local sfEased = 1 - (1 - sf) * (1 - sf) * (1 - sf)
-                    self:_SetOpacityStartsWith('menu_section_', sfEased)
-                end
+                local sectionFade = 1 - (self._tab_change_at - (os.clock() - 0.25)) / 0.25
+                if sectionFade < 1.1 then self:_SetOpacityStartsWith('menu_section_', clamp(sectionFade, 0, 1)) end
 
                 local contentAreaX = bodyContentPos.x + tabPanelWidth + 1
                 local contentAreaW = bodyContentSize.x - tabPanelWidth - 1
@@ -1053,12 +1049,19 @@ do
                             self:_Draw(sectionDrawId .. '_title', 'text', self._theming.text, 20, sectionPos + Vector2.new(self._padding, -menuTitleSize.y/2), sectionName, true)
                         end
 
+                        -- only undraw hidden items when mini tab changes, not every frame
+                        if hasMiniTabs and sectionContent._prev_mini_tab ~= sectionContent._active_mini_tab then
+                            for cleanIdx, cleanItem in ipairs(sectionContent._items) do
+                                if cleanItem._mini_tab ~= sectionContent._active_mini_tab then
+                                    self:_UndrawStartsWith(sectionDrawId .. '_item_' .. tostring(cleanIdx))
+                                end
+                            end
+                            sectionContent._prev_mini_tab = sectionContent._active_mini_tab
+                        end
+
                         for sectionItemIter, sectionItem in ipairs(sectionContent._items) do
                             -- skip items not belonging to the active mini tab
-                            if hasMiniTabs and sectionItem._mini_tab ~= sectionContent._active_mini_tab then
-                                self:_UndrawStartsWith(sectionDrawId .. '_item_' .. tostring(sectionItemIter))
-                                continue
-                            end
+                            if not hasMiniTabs or sectionItem._mini_tab == sectionContent._active_mini_tab then
                             local sectionItemId = sectionDrawId .. '_item_' .. tostring(sectionItemIter)
                             local sectionItemOrigin = Vector2.new(sectionPos.x + self._padding, sectionPos.y + sectionHeight)
                             local itemType = sectionItem.type_
@@ -1367,6 +1370,7 @@ do
                                 self:_Draw(sectionItemId .. '_text', 'text', labelColor, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
                                 sectionHeight = sectionHeight + labelSize.y + self._padding
                             end
+                            end -- mini tab guard
                         end
 
                         if isSectionMirror then totalSectionHeightR = totalSectionHeightR + sectionHeight + sectionTitleSize.y/2
@@ -1396,14 +1400,11 @@ do
             self:_RemoveDropdown()
         end
 
-        -- fade the menu (smooth ease-out cubic)
-        local fadeDuration = 0.35
-        local t = clamp((os.clock() - self._menu_toggled_at) / fadeDuration, 0, 1)
-        local eased = 1 - (1 - t) * (1 - t) * (1 - t)
-        local opacity = self._menu_open and eased or (1 - eased)
-        if t < 1 then
-            self:_SetOpacityStartsWith('menu_', opacity)
-        elseif not self._menu_open then
+        -- fade the menu
+        local menuFade = 1 - (self._menu_toggled_at - (os.clock() - 0.25)) / 0.25
+        if menuFade < 1.1 then
+            self:_SetOpacityStartsWith('menu_', math.abs((self._menu_open and 0 or 1) - clamp(menuFade, 0, 1)))
+        elseif not self._menu_open and menuFade > 1.1 and menuFade < 1.6 then
             self:_UndrawStartsWith('menu_')
         end
 
