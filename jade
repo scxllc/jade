@@ -1363,16 +1363,8 @@ do
 
                             elseif itemType == 'label' then
                                 local labelColor = sectionItem.text_color or self._theming.subtext
-                                local maxW = sectionWidth - self._padding * 3
-                                local labelText = sectionItem.label
-                                if self:_GetTextBounds(labelText).x > maxW then
-                                    for c = #labelText, 1, -1 do
-                                        local sub = labelText:sub(1, c) .. '..'
-                                        if self:_GetTextBounds(sub).x <= maxW then labelText = sub; break end
-                                    end
-                                end
-                                local labelSize = self:_GetTextBounds(labelText)
-                                self:_Draw(sectionItemId .. '_text', 'text', labelColor, 20, sectionItemOrigin + Vector2.new(self._padding, 0), labelText, true)
+                                local labelSize = self:_GetTextBounds(sectionItem.label)
+                                self:_Draw(sectionItemId .. '_text', 'text', labelColor, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
                                 sectionHeight = sectionHeight + labelSize.y + self._padding
                             end
                         end
@@ -1383,16 +1375,8 @@ do
                             if isSectionMirror then sectionHeight = bodyContentSize.y - totalSectionHeightR + sectionHeight - self._padding
                             else sectionHeight = bodyContentSize.y - totalSectionHeightL + sectionHeight - self._padding end
                         end
-                        -- draw section backdrop: offset below tab strip for tabbed sections
-                        local backdropY = sectionPos.y
-                        local backdropH = sectionHeight
-                        if hasMiniTabs then
-                            local mtTabH = self:_GetTextBounds(sectionName).y + self._padding + 4
-                            backdropY = sectionPos.y - self:_GetTextBounds(self.title).y/2 - 2 + mtTabH
-                            backdropH = sectionHeight - mtTabH + self:_GetTextBounds(sectionName).y/2 + 2
-                        end
-                        self:_Draw(sectionDrawId .. '_backdrop', 'rect', self._theming.surface0, 11, Vector2.new(sectionPos.x, backdropY), Vector2.new(sectionWidth, backdropH), true)
-                        self:_Draw(sectionDrawId .. '_border', 'rect', self._theming.border0, 12, Vector2.new(sectionPos.x, backdropY), Vector2.new(sectionWidth, backdropH), false)
+                        self:_Draw(sectionDrawId .. '_backdrop', 'rect', self._theming.surface0, 11, sectionPos, Vector2.new(sectionWidth, sectionHeight), true)
+                        self:_Draw(sectionDrawId .. '_border', 'rect', self._theming.border0, 12, sectionPos, Vector2.new(sectionWidth, sectionHeight), false)
                         if isSectionMirror then totalSectionHeightR = totalSectionHeightR + self._padding
                         else totalSectionHeightL = totalSectionHeightL + self._padding end
                     else
@@ -1412,16 +1396,14 @@ do
             self:_RemoveDropdown()
         end
 
-        -- fade the menu (smooth ease-out)
-        local fadeDuration = 0.4
-        local menuFadeRaw = (os.clock() - self._menu_toggled_at) / fadeDuration
-        local menuFadeClamped = clamp(menuFadeRaw, 0, 1)
-        -- ease-out cubic: smooth deceleration
-        local eased = 1 - (1 - menuFadeClamped) * (1 - menuFadeClamped) * (1 - menuFadeClamped)
+        -- fade the menu (smooth ease-out cubic)
+        local fadeDuration = 0.35
+        local t = clamp((os.clock() - self._menu_toggled_at) / fadeDuration, 0, 1)
+        local eased = 1 - (1 - t) * (1 - t) * (1 - t)
         local opacity = self._menu_open and eased or (1 - eased)
-        if menuFadeRaw < 1.1 then
+        if t < 1 then
             self:_SetOpacityStartsWith('menu_', opacity)
-        elseif not self._menu_open and menuFadeRaw > 1.1 and menuFadeRaw < 1.6 then
+        elseif not self._menu_open then
             self:_UndrawStartsWith('menu_')
         end
 
