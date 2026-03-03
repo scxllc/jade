@@ -986,32 +986,22 @@ do
                                 local isActiveMT = sectionContent._active_mini_tab == mtName
                                 local isHoveringMT = self:_IsMouseWithinBounds(Vector2.new(tabX, mtY), Vector2.new(actualW, mtTabH))
 
-                                -- tab background: active gets a gradient, inactive stays flat
+                                -- tab background (solid rects only, no gradients)
+                                local tabBg
                                 if isActiveMT then
-                                    -- dim accent tint for active tab bg
-                                    local dimAccent = Color3.new(
-                                        self._theming.accent.R * 0.15,
-                                        self._theming.accent.G * 0.15,
-                                        self._theming.accent.B * 0.15
-                                    )
-                                    self:_UndrawStartsWith(mtDrawId .. '_bg_flat')
-                                    self:_Draw(mtDrawId .. '_bg_grad', 'gradient', nil, 20, 'vertical', Vector2.new(tabX, mtY + 1), Vector2.new(actualW, mtTabH - 2), self._theming.surface0, dimAccent)
+                                    tabBg = self._theming.surface0
+                                elseif isHoveringMT then
+                                    tabBg = self._theming.surface1
                                 else
-                                    local tabBg = isHoveringMT and self._theming.surface1 or self._theming.crust
-                                    self:_UndrawStartsWith(mtDrawId .. '_bg_grad')
-                                    self:_Draw(mtDrawId .. '_bg_flat', 'rect', tabBg, 20, Vector2.new(tabX, mtY + 1), Vector2.new(actualW, mtTabH - 2), true)
+                                    tabBg = self._theming.crust
                                 end
+                                self:_Draw(mtDrawId .. '_bg', 'rect', tabBg, 20, Vector2.new(tabX, mtY + 1), Vector2.new(actualW, mtTabH - 2), true)
 
-                                -- accent bar on active tab (bottom edge, 2px)
+                                -- accent bar on active tab (bottom edge, 2px solid)
                                 if isActiveMT then
-                                    local dimAccent2 = Color3.new(
-                                        self._theming.accent.R * 0.4,
-                                        self._theming.accent.G * 0.4,
-                                        self._theming.accent.B * 0.4
-                                    )
-                                    self:_Draw(mtDrawId .. '_accent', 'gradient', nil, 22, 'horizontal', Vector2.new(tabX + 2, mtY + mtTabH - 3), Vector2.new(actualW - 4, 2), dimAccent2, self._theming.accent)
+                                    self:_Draw(mtDrawId .. '_accent', 'rect', self._theming.accent, 22, Vector2.new(tabX + 1, mtY + mtTabH - 3), Vector2.new(actualW - 2, 2), true)
                                 else
-                                    self:_UndrawStartsWith(mtDrawId .. '_accent')
+                                    self:_Undraw(mtDrawId .. '_accent')
                                 end
 
                                 -- separator line between tabs
