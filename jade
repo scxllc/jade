@@ -2,10 +2,7 @@
 
     jade ui library
     forked from nulare's library
-    by @scxllc on discord
-
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/scxllc/jade/main/jade.lua'))()
-
+    @v6vz
 ]]
 
 UILib = {
@@ -506,7 +503,6 @@ do
     end
 
     function UILib:_TabbedSection(tabName, miniTabNames)
-        -- internal section name is the joined mini tab names
         local sectionName = table.concat(miniTabNames, '|')
         self._tree[tabName]._items[sectionName] = {
             _items = {},
@@ -688,7 +684,6 @@ do
         local menuTitle = self._custom_title_enabled and self._custom_title or self.title
         local hoveredTooltip = nil
 
-        -- input processing
         setrobloxinput(not self._menu_open or not self._block_roblox_input)
         for keycode, inputData in pairs(self._inputs) do
             local keycodeId = inputData.id
@@ -716,7 +711,6 @@ do
             self._menu_toggled_at = os.clock()
         end
 
-        -- process keybinds globally (works even when menu is hidden)
         for _, tabContent in pairs(self._tree) do
             for _, sectionContent in pairs(tabContent._items) do
                 for _, sectionItem in ipairs(sectionContent._items) do
@@ -749,7 +743,6 @@ do
             end
         end
 
-        -- draw watermark
         local watermarkPos = Vector2.new(20, 20)
         local watermarkStates = {menuTitle}
         for _, activity in ipairs(self._activities) do
@@ -770,7 +763,6 @@ do
             self:_UndrawStartsWith('watermark_')
         end
 
-        -- notifications
         local notificationsOrigin = watermarkPos + (self._watermark_enabled and Vector2.new(0, watermarkSize.y + self._padding) or Vector2.new(0, 0))
         local totalNotificationsHeight = 0
         for notificationIter, notification in ipairs(self._notifications) do
@@ -797,7 +789,6 @@ do
         end
 
         if self._menu_open then
-            -- drag the menu
             if mouseHeld and self._menu_drag then
                 local mousePos = self:_GetMousePos()
                 self.x = mousePos.x - self._menu_drag.x
@@ -806,7 +797,6 @@ do
                 self._menu_drag = nil
             end
 
-            -- draw the dropdown
             local dropdown = self._active_dropdown
             if dropdown then
                 local dropdownFade = 1 - (dropdown._spawned_at - (os.clock() - 0.25)) / 0.25
@@ -846,7 +836,6 @@ do
                 clickFrame = false
             end
 
-            -- draw the colorpicker
             local colorpicker = self._active_colorpicker
             if colorpicker then
                 local colorpickerFade = 1 - (colorpicker._spawned_at - (os.clock() - 0.25)) / 0.25
@@ -894,23 +883,19 @@ do
                 clickFrame = false
             end
 
-            -- menu contents
             local menuTitleSize = self:_GetTextBounds(menuTitle)
             self:_Draw('menu_crust', 'rect', self._theming.crust, 1, Vector2.new(self.x, self.y), Vector2.new(self.w, self.h), false)
             self:_Draw('menu_body', 'rect', self._theming.surface0, 2, Vector2.new(self.x + 1, self.y + 1), Vector2.new(self.w - 2, self.h - 2), true)
             self:_Draw('menu_body_border_outer', 'rect', self._theming.border1, 3, Vector2.new(self.x + 1, self.y + 1), Vector2.new(self.w - 2, self.h - 2), false)
             self:_Draw('menu_title', 'text', self._theming.text, 4, Vector2.new(self.x + self._padding + 1, self.y + self._padding + 2), menuTitle, true)
-            -- heart icon next to title (2 circles + 1 triangle)
             do
                 local s = menuTitleSize.y * 0.40
                 local hx = self.x + self._padding + 1 + menuTitleSize.x + 6
                 local hy = self.y + self._padding + 2 + menuTitleSize.y / 2 - s * 0.75
                 local hc = self._theming.accent
                 local r = s * 0.42
-                -- two circles for the lobes
                 self:_Draw('menu_heart_cl', 'circle', hc, 5, Vector2.new(hx + s * 0.35, hy + r), r, true, 24)
                 self:_Draw('menu_heart_cr', 'circle', hc, 5, Vector2.new(hx + s * 1.05, hy + r), r, true, 24)
-                -- triangle for the bottom point
                 self:_Draw('menu_heart_bt', 'triangle', hc, 5, true,
                     Vector2.new(hx + s * 0.35 - r, hy + r),
                     Vector2.new(hx + s * 1.05 + r, hy + r),
@@ -924,7 +909,6 @@ do
             self:_Draw('menu_body_border_inner', 'rect', self._theming.border1, 11, bodyContentPos - Vector2.new(1, 1), bodyContentSize + Vector2.new(2, 2), false)
             self:_Draw('menu_body_content', 'rect', self._theming.body, 10, bodyContentPos, bodyContentSize, true)
 
-            -- side tabs
             local tabIter = 0
             local tabCount = #self._tab_order
             local tabPanelWidth = self._tab_w
@@ -983,7 +967,6 @@ do
                     end
 
                     if isOpen then
-                        -- render section header: mini tabs or plain title
                         if hasMiniTabs then
                             local mtTabH = sectionTitleSize.y + self._padding + 4
                             local mtY = sectionPos.y - menuTitleSize.y/2 - 2
@@ -991,12 +974,9 @@ do
                             local totalTabW = sectionWidth
                             local tabCount = #sectionContent._mini_tabs
 
-                            -- outer border around the tab strip
                             self:_Draw(sectionDrawId .. '_mt_border', 'rect', self._theming.border0, 18, Vector2.new(mtX, mtY), Vector2.new(totalTabW, mtTabH), false)
-                            -- background strip behind all tabs
                             self:_Draw(sectionDrawId .. '_mt_strip', 'rect', self._theming.crust, 17, Vector2.new(mtX + 1, mtY + 1), Vector2.new(totalTabW - 2, mtTabH - 2), true)
 
-                            -- individual tab width (inset 1px for border)
                             local innerW = totalTabW - 2
                             local tabW = math.floor(innerW / tabCount)
 
@@ -1008,7 +988,6 @@ do
                                 local isActiveMT = sectionContent._active_mini_tab == mtName
                                 local isHoveringMT = self:_IsMouseWithinBounds(Vector2.new(tabX, mtY), Vector2.new(actualW, mtTabH))
 
-                                -- tab background (solid rects only, no gradients)
                                 local tabBg
                                 if isActiveMT then
                                     tabBg = self._theming.surface0
@@ -1019,19 +998,16 @@ do
                                 end
                                 self:_Draw(mtDrawId .. '_bg', 'rect', tabBg, 20, Vector2.new(tabX, mtY + 1), Vector2.new(actualW, mtTabH - 2), true)
 
-                                -- accent bar on active tab (bottom edge, 2px solid)
                                 if isActiveMT then
                                     self:_Draw(mtDrawId .. '_accent', 'rect', self._theming.accent, 22, Vector2.new(tabX + 1, mtY + mtTabH - 3), Vector2.new(actualW - 2, 2), true)
                                 else
                                     self:_Undraw(mtDrawId .. '_accent')
                                 end
 
-                                -- separator line between tabs
                                 if mtIdx < tabCount then
                                     self:_Draw(mtDrawId .. '_sep', 'rect', self._theming.border0, 21, Vector2.new(tabX + actualW, mtY + 3), Vector2.new(1, mtTabH - 6), true)
                                 end
 
-                                -- centered tab label
                                 local mtLabelSize = self:_GetTextBounds(mtName)
                                 local labelX = tabX + math.floor((actualW - mtLabelSize.x) / 2)
                                 local labelY = mtY + math.floor((mtTabH - mtLabelSize.y) / 2) - 1
@@ -1044,13 +1020,11 @@ do
                                 end
                             end
 
-                            -- adjust section height to account for tab strip
                             sectionHeight = sectionHeight + mtTabH - sectionTitleSize.y/2 + 2
                         else
                             self:_Draw(sectionDrawId .. '_title', 'text', self._theming.text, 20, sectionPos + Vector2.new(self._padding, -menuTitleSize.y/2), sectionName, true)
                         end
 
-                        -- only undraw hidden items when mini tab changes, not every frame
                         if hasMiniTabs and sectionContent._prev_mini_tab ~= sectionContent._active_mini_tab then
                             for cleanIdx, cleanItem in ipairs(sectionContent._items) do
                                 if cleanItem._mini_tab ~= sectionContent._active_mini_tab then
@@ -1061,7 +1035,6 @@ do
                         end
 
                         for sectionItemIter, sectionItem in ipairs(sectionContent._items) do
-                            -- skip items not belonging to the active mini tab
                             if not hasMiniTabs or sectionItem._mini_tab == sectionContent._active_mini_tab then
                             local sectionItemId = sectionDrawId .. '_item_' .. tostring(sectionItemIter)
                             local sectionItemOrigin = Vector2.new(sectionPos.x + self._padding, sectionPos.y + sectionHeight)
@@ -1216,22 +1189,18 @@ do
                                 end
                                 local fillPercent = (itemValue - (sectionItem.min or 0)) / ((sectionItem.max or 1) - (sectionItem.min or 0))
                                 local fillWidth = math.max(0, sliderSize.x * fillPercent)
-                                -- track background
                                 self:_Draw(sectionItemId .. '_track', 'rect', self._theming.crust, 20, sliderOrigin, sliderSize, true)
                                 self:_Draw(sectionItemId .. '_track_border', 'rect', self._theming.border0, 21, sliderOrigin, sliderSize, false)
-                                -- gradient accent fill
                                 if fillWidth > 2 then
                                     local dimAccent = Color3.new(self._theming.accent.R * 0.3, self._theming.accent.G * 0.3, self._theming.accent.B * 0.3)
                                     self:_Draw(sectionItemId .. '_slider', 'gradient', nil, 22, 'horizontal', sliderOrigin + Vector2.new(1, 1), Vector2.new(fillWidth - 2, sliderSize.y - 2), dimAccent, self._theming.accent)
                                 end
-                                -- thumb notch at fill end
                                 if fillWidth > 0 then
                                     local thumbX = sliderOrigin.x + fillWidth
                                     local thumbH = sliderSize.y + 4
                                     local thumbY = sliderOrigin.y - 2
                                     self:_Draw(sectionItemId .. '_thumb', 'rect', self._theming.accent, 23, Vector2.new(thumbX - 1, thumbY), Vector2.new(2, thumbH), true)
                                 end
-                                -- value text right-aligned next to label
                                 local displayedValue = tostring(itemValue) .. sectionItem.suffix
                                 local valueTextSize = self:_GetTextBounds(displayedValue, nil, 11)
                                 self:_Draw(sectionItemId .. '_value', 'text', self._theming.accent, 22, sectionItemOrigin + Vector2.new(sectionWidth - self._padding * 2 - valueTextSize.x, 0), displayedValue, true, nil, 11)
@@ -1251,29 +1220,24 @@ do
                                     end, sectionItemId)
                                     clickFrame = false
                                 end
-                                -- dropdown body with hover highlight
                                 local ddBodyColor = isHoveringDropdown and self._theming.surface0 or self._theming.crust
                                 local ddBorderColor = isHoveringDropdown and self._theming.accent or self._theming.border0
                                 self:_Draw(sectionItemId .. '_list', 'rect', ddBodyColor, 20, dropdownOrigin, dropdownSize, true)
                                 self:_Draw(sectionItemId .. '_border', 'rect', ddBorderColor, 21, dropdownOrigin, dropdownSize, false)
-                                -- directional arrow: right ► when closed, down ▼ when open
                                 local chevronX = dropdownOrigin.x + dropdownSize.x - self._padding - 4
                                 local chevronY = dropdownOrigin.y + dropdownSize.y/2
                                 local arrowColor = isHoveringDropdown and self._theming.accent or self._theming.subtext
                                 if isDropdownOpen then
-                                    -- down arrow ▼
                                     self:_Draw(sectionItemId .. '_arrow', 'triangle', arrowColor, 22, true,
                                         Vector2.new(chevronX - 4, chevronY - 2),
                                         Vector2.new(chevronX + 4, chevronY - 2),
                                         Vector2.new(chevronX, chevronY + 3))
                                 else
-                                    -- left arrow ◄
                                     self:_Draw(sectionItemId .. '_arrow', 'triangle', arrowColor, 22, true,
                                         Vector2.new(chevronX + 3, chevronY - 4),
                                         Vector2.new(chevronX + 3, chevronY + 4),
                                         Vector2.new(chevronX - 3, chevronY))
                                 end
-                                -- value text
                                 local displayedValue = table.concat(itemValue, ', ')
                                 local valueSize = self:_GetTextBounds(displayedValue)
                                 if valueSize.x > dropdownSize.x - self._padding * 2 - 12 then
@@ -1298,11 +1262,9 @@ do
                                     self._slider_drag = nil
                                 end
                                 local isClicked = mouseHeld and self._slider_drag == sectionItemId
-                                -- button body
                                 local buttonColor = isClicked and self._theming.surface1 or self._theming.crust
                                 self:_Draw(sectionItemId .. '_body', 'rect', buttonColor, 20, buttonOrigin, buttonSize, true)
                                 self:_Draw(sectionItemId .. '_border', 'rect', self._theming.border0, 21, buttonOrigin, buttonSize, false)
-                                -- accent left bar when clicked
                                 if isClicked then
                                     self:_Draw(sectionItemId .. '_accent', 'rect', self._theming.accent, 22, buttonOrigin, Vector2.new(2, buttonSize.y), true)
                                 else
@@ -1371,7 +1333,7 @@ do
                                 self:_Draw(sectionItemId .. '_text', 'text', labelColor, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
                                 sectionHeight = sectionHeight + labelSize.y + self._padding
                             end
-                            end -- mini tab guard
+                            end
                         end
 
                         if isSectionMirror then totalSectionHeightR = totalSectionHeightR + sectionHeight + sectionTitleSize.y/2
@@ -1401,7 +1363,6 @@ do
             self:_RemoveDropdown()
         end
 
-        -- fade the menu
         local menuFade = 1 - (self._menu_toggled_at - (os.clock() - 0.25)) / 0.25
         if menuFade < 1.1 then
             self:_SetOpacityStartsWith('menu_', math.abs((self._menu_open and 0 or 1) - clamp(menuFade, 0, 1)))
@@ -1409,7 +1370,6 @@ do
             self:_UndrawStartsWith('menu_')
         end
 
-        -- tooltip rendering logic
         if hoveredTooltip then
             local mousePos = self:_GetMousePos()
             local prevMouse = self._tooltip_mouse_prev
@@ -1435,7 +1395,6 @@ do
                 self:_Draw('menu_tooltip_body', 'rect', self._theming.surface1, 1000, tooltipOrigin, tooltipFullSize, true)
                 self:_Draw('menu_tooltip_crust', 'rect', self._theming.crust, 1001, tooltipOrigin, tooltipFullSize, false)
                 self:_Draw('menu_tooltip_border', 'rect', self._theming.border1, 1002, tooltipOrigin + Vector2.new(1, 1), tooltipFullSize - Vector2.new(2, 2), false)
-                -- vertical alignment fix: use self._padding/2 instead of tooltipSize.y/2 to keep it centered
                 self:_Draw('menu_tooltip_text', 'text', self._theming.text, 1003, tooltipOrigin + Vector2.new(self._padding / 2, self._padding / 2), hoveredTooltip, true)
             end
         else
@@ -1457,10 +1416,8 @@ do
         self:SetMenuSize(Vector2.new(540, 540))
         self:CenterMenu()
 
-        -- ── Elements Tab ──────────────────────────────────────────────────
         local elementsTab = self:Tab('Elements')
 
-        -- Toggles section: shows all toggle variants
         local toggles = elementsTab:Section('Toggles')
         local togglePlain = toggles:Toggle('Basic toggle', false)
         local toggleTip = toggles:Toggle('With tooltip', false, nil, false, 'Hover me for info!')
@@ -1474,7 +1431,6 @@ do
         local toggleCustom = toggles:Toggle('Custom text color', true)
         toggleCustom:SetTextColor(Color3.fromRGB(255, 170, 50))
 
-        -- Inputs section: sliders, dropdowns, textbox, label
         local inputs = elementsTab:Section('Inputs')
         inputs:Label('-- Info Labels --')
         local dragMe = inputs:Slider('Slider', 50, 1, 0, 100, '%')
@@ -1497,7 +1453,6 @@ do
             pickMulti:Set({'Red', 'Green'})
         end)
 
-        -- ── Animations Tab ────────────────────────────────────────────────
         local animTab = self:Tab('Animations')
 
         local anims = animTab:Section('Live Preview')
@@ -1514,10 +1469,8 @@ do
         animInfo:Label('This tab shows live slider animation.')
         animInfo:Label('Toggle "Playing" to start the demo.', Color3.fromRGB(0, 200, 120))
 
-        -- ── Mini Tabs Tab ─────────────────────────────────────────────────
         local miniTab = self:Tab('Mini Tabs')
 
-        -- tabbed section with all element types inside
         local tabbed = miniTab:TabbedSection({'Farming', 'Auto', 'Events'})
         tabbed['Farming']:Label('Configure auto-farming below')
         tabbed['Farming']:Toggle('Auto Farm', false)
@@ -1534,7 +1487,6 @@ do
         miniTab:Section('Below Tabs')
         :Label('Sections work normally below tabbed sections.')
 
-        -- ── Ordering Tab ──────────────────────────────────────────────────
         local orderTab = self:Tab('Ordering')
         local orderA = orderTab:Section('Alpha')
         orderA:Toggle('Alpha toggle', false)
@@ -1548,10 +1500,8 @@ do
         orderC:Toggle('Gamma toggle', false)
         orderC:Dropdown('Gamma pick', {'A'}, {'A', 'B', 'C'}, false)
 
-        -- reorder: Gamma→Alpha→Beta
         orderTab:SetSectionOrder({'Gamma', 'Alpha', 'Beta'})
 
-        -- ── Tab order ─────────────────────────────────────────────────────
         self:SetTabOrder({'Elements', 'Mini Tabs', 'Animations', 'Ordering'})
 
         local shouldDie = false
