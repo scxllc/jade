@@ -1467,22 +1467,6 @@ do
             pickMulti:Set({'Red', 'Green'})
         end)
 
-        local animTab = self:Tab('Animations')
-
-        local anims = animTab:Section('Live Preview')
-        local shouldAnimate = false
-        local animToggle = anims:Toggle('Playing', shouldAnimate, function(v) shouldAnimate = v end)
-        local animSlider = anims:Slider('Meter', 0, 1, -100, 100, '%')
-        local statusLabel = anims:Label('Status: Stopped')
-        anims:Button('Stop', function()
-            animToggle:Set(false)
-            statusLabel:SetText('Status: Stopped')
-        end)
-
-        local animInfo = animTab:Section('Info')
-        animInfo:Label('This tab shows live slider animation.')
-        animInfo:Label('Toggle "Playing" to start the demo.', Color3.fromRGB(0, 200, 120))
-
         local miniTab = self:Tab('Mini Tabs')
 
         local tabbed = miniTab:TabbedSection({'Farming', 'Auto', 'Events'})
@@ -1516,7 +1500,7 @@ do
 
         orderTab:SetSectionOrder({'Gamma', 'Alpha', 'Beta'})
 
-        self:SetTabOrder({'Elements', 'Mini Tabs', 'Animations', 'Ordering'})
+        self:SetTabOrder({'Elements', 'Mini Tabs', 'Ordering'})
 
         local shouldDie = false
         local _, menuSettings = self:CreateSettingsTab()
@@ -1528,12 +1512,8 @@ do
         self:Notification('Press F1 to toggle the menu', 15)
 
         while not shouldDie do
-            if shouldAnimate then
-                local val = math.floor(math.sin(os.clock() * 10) * 100)
-                animSlider:Set(val)
-                statusLabel:SetText('Status: ' .. tostring(val) .. '%')
-            end
             self:Step()
+            task.wait()
         end
 
         self:Unload()
