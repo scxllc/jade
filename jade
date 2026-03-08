@@ -2,22 +2,14 @@
 
     jade ui library
     forked from nulare's library
-    by @scxllc on discord
 
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/scxllc/jade/main/jade.lua'))()
 
 ]]
 
-local UILib = {
+UILib = {
     _font_face = Drawing.Fonts.UI,
     _font_size = 13,
     _drawings = {},
-    _drawing_groups = {},
-    _gradient_cache = {},
-    _text_bounds_cache = {},
-    _mouse_pos_cache = Vector2.new(),
-    _mouse_obj = nil,
-    _screen_size_cache = Vector2.new(1920, 1080),
     _tree = {},
     _tab_order = {},
     _menu_open = true,
@@ -131,35 +123,28 @@ do
     end
 
     function UILib:_GetScreenSize()
+        local screenSize = Vector2.new(1920, 1080)
         local camera = workspace.CurrentCamera
         if camera and camera.ViewportSize then
-            self._screen_size_cache = camera.ViewportSize
+            screenSize = camera.ViewportSize
         end
-        return self._screen_size_cache
-    end
-
-    function UILib:_UpdateMousePos()
-        if not self._mouse_obj then
-            local myPlayer = game:GetService('Players').LocalPlayer
-            if myPlayer then self._mouse_obj = myPlayer:GetMouse() end
-        end
-        if self._mouse_obj then
-            local newPos = Vector2.new(self._mouse_obj.X, self._mouse_obj.Y)
-            if newPos ~= self._mouse_pos_cache then
-                self._mouse_pos_cache = newPos
-                self._mouse_moved = true
-            else
-                self._mouse_moved = false
-            end
-        end
+        return screenSize
     end
 
     function UILib:_GetMousePos()
-        return self._mouse_pos_cache
+        local mousePos = Vector2.new()
+        local myPlayer = game:GetService('Players').LocalPlayer
+        if myPlayer then
+            local myMouse = myPlayer:GetMouse()
+            if myMouse then
+                mousePos = Vector2.new(myMouse.X, myMouse.Y)
+            end
+        end
+        return mousePos
     end
 
     function UILib:_IsMouseWithinBounds(origin, size)
-        local mousePos = self._mouse_pos_cache
+        local mousePos = self:_GetMousePos()
         return mousePos.x >= origin.x and mousePos.x <= origin.x + size.x and mousePos.y >= origin.y and mousePos.y <= origin.y + size.y
     end
 end
@@ -168,57 +153,23 @@ do
     function UILib:_GetTextBounds(text, fontFace, fontSize)
         fontFace = fontFace or self._font_face
         fontSize = fontSize or self._font_size
-        local cacheKey = text .. tostring(fontFace) .. tostring(fontSize)
-        if self._text_bounds_cache[cacheKey] then return self._text_bounds_cache[cacheKey] end
-        
-        local bounds
         if fontFace == Drawing.Fonts.UI then
-            bounds = Vector2.new(#text * fontSize * 0.53846, fontSize)
-        else
-            bounds = Vector2.new(#text * fontSize, fontSize)
+            return Vector2.new(#text * fontSize * 0.53846, fontSize)
         end
-        self._text_bounds_cache[cacheKey] = bounds
-        return bounds
+        return Vector2.new(#text * fontSize, fontSize)
     end
 
     function UILib:_Lerp(a, b, t)
         return a + (b - a) * t
     end
 
-    function UILib:_AddDrawingToGroups(drawId, drawObject)
-        self._drawing_groups = self._drawing_groups or {}
-        local len = #drawId
-        for i = 1, len do
-            if i == len or drawId:byte(i) == 95 then
-                local prefix = drawId:sub(1, i)
-                local group = self._drawing_groups[prefix]
-                if not group then group = {}; self._drawing_groups[prefix] = group end
-                group[drawId] = drawObject
-            end
-        end
-    end
-
-    function UILib:_RemoveDrawingFromGroups(drawId)
-        if not self._drawing_groups then return end
-        local len = #drawId
-        for i = 1, len do
-            if i == len or drawId:byte(i) == 95 then
-                local prefix = drawId:sub(1, i)
-                local group = self._drawing_groups[prefix]
-                if group then group[drawId] = nil end
-            end
-        end
-    end
-
     function UILib:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
         local draw = self._drawings[drawId]
-        local isNew = false
 
         if drawType == 'rect' then
             if not draw then
-                draw = Drawing.new('Square')
-                self._drawings[drawId] = draw
-                isNew = true
+                self._drawings[drawId] = Drawing.new('Square')
+                return self:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
             end
             local rectPosition, rectSize, rectFilled = ...
             draw.Position = rectPosition
@@ -226,9 +177,8 @@ do
             draw.Filled = rectFilled
         elseif drawType == 'text' then
             if not draw then
-                draw = Drawing.new('Text')
-                self._drawings[drawId] = draw
-                isNew = true
+                self._drawings[drawId] = Drawing.new('Text')
+                return self:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
             end
             local textPosition, textContent, textOutline, textAlign, textSize, textFontFace = ...
             if textAlign == 'center' then
@@ -244,9 +194,8 @@ do
             draw.Size = textSize or self._font_size
         elseif drawType == 'line' then
             if not draw then
-                draw = Drawing.new('Line')
-                self._drawings[drawId] = draw
-                isNew = true
+                self._drawings[drawId] = Drawing.new('Line')
+                return self:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
             end
             local lineFrom, lineTo, lineThickness = ...
             draw.From = lineFrom
@@ -254,9 +203,8 @@ do
             draw.Thickness = lineThickness or 1
         elseif drawType == 'triangle' then
             if not draw then
-                draw = Drawing.new('Triangle')
-                self._drawings[drawId] = draw
-                isNew = true
+                self._drawings[drawId] = Drawing.new('Triangle')
+                return self:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
             end
             local triangleFilled, trianglePointA, trianglePointB, trianglePointC = ...
             draw.Filled = triangleFilled
@@ -265,9 +213,8 @@ do
             draw.PointC = trianglePointC
         elseif drawType == 'circle' then
             if not draw then
-                draw = Drawing.new('Circle')
-                self._drawings[drawId] = draw
-                isNew = true
+                self._drawings[drawId] = Drawing.new('Circle')
+                return self:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
             end
             local circlePosition, circleRadius, circleFilled, circleSegments = ...
             draw.Position = circlePosition
@@ -285,19 +232,6 @@ do
                     self:_Lerp(firstColor.B, tintColor.B, 0.5)
                 ))
             end
-            
-            local ckey = tostring(args[1]) .. "_" .. tostring(args[2]) .. "_" .. tostring(args[3])
-            for i = 4, #args do ckey = ckey .. "_" .. tostring(args[i]) end
-            
-            if self._gradient_cache[drawId] == ckey then
-                local group = self._drawing_groups[drawId]
-                if group then
-                    for _, dObj in pairs(group) do dObj.Visible = true; dObj.ZIndex = drawZIndex end
-                end
-                return
-            end
-            self._gradient_cache[drawId] = ckey
-            
             local gradientDirection = args[1]
             local gradientOrigin = args[2]
             local gradientSize = args[3]
@@ -337,8 +271,6 @@ do
             end
             return
         end
-        
-        if isNew then self:_AddDrawingToGroups(drawId, draw) end
         draw.Color = drawColor
         draw.ZIndex = drawZIndex
         draw.Visible = true
@@ -346,11 +278,7 @@ do
 
     function UILib:_RemoveDraw(drawId)
         local drawObject = self._drawings[drawId]
-        if drawObject then
-            drawObject:Remove()
-            self._drawings[drawId] = nil
-            self:_RemoveDrawingFromGroups(drawId)
-        end
+        if drawObject then drawObject:Remove() end
     end
 
     function UILib:_Undraw(drawId)
@@ -364,18 +292,21 @@ do
     end
 
     function UILib:_RemoveDrawStartsWith(drawId)
-        local group = self._drawing_groups and self._drawing_groups[drawId]
-        if group then for drawName, _ in pairs(group) do UILib:_RemoveDraw(drawName) end end
+        for drawName, _drawObject in pairs(self._drawings) do
+            if drawName:sub(1, #drawId) == drawId then UILib:_RemoveDraw(drawName) end
+        end
     end
 
     function UILib:_UndrawStartsWith(drawId)
-        local group = self._drawing_groups and self._drawing_groups[drawId]
-        if group then for _, drawObject in pairs(group) do drawObject.Visible = false end end
+        for drawName, _drawObject in pairs(self._drawings) do
+            if drawName:sub(1, #drawId) == drawId then UILib:_Undraw(drawName) end
+        end
     end
 
     function UILib:_SetOpacityStartsWith(drawId, opacity)
-        local group = self._drawing_groups and self._drawing_groups[drawId]
-        if group then for _, drawObject in pairs(group) do drawObject.Transparency = opacity end end
+        for drawName, _drawObject in pairs(self._drawings) do
+            if drawName:sub(1, #drawId) == drawId then UILib:_SetOpacity(drawName, opacity) end
+        end
     end
 end
 
@@ -419,12 +350,10 @@ do
             type_ = 'toggle', label = label, value = value,
             callback = callback, unsafe = unsafe or false, tooltip = tooltip,
             _mini_tab = miniTab,
-            _draw_id = sectionContent._draw_id .. '_item_' .. tostring(itemId),
         }
         table.insert(sectionContent._items, item)
         return {
             Set = function(_, newValue)
-                self._is_dirty = true
                 self._tree[tabName]._items[sectionName]._items[itemId].value = newValue
                 if self._tree[tabName]._items[sectionName]._items[itemId].callback then
                     self._tree[tabName]._items[sectionName]._items[itemId].callback(newValue)
@@ -439,7 +368,6 @@ do
                 self._tree[tabName]._items[sectionName]._items[itemId].keybind = kitem
                 return {
                     Set = function(_, newValue, newMode)
-                        self._is_dirty = true
                         local kmode = newMode or self._tree[tabName]._items[sectionName]._items[itemId].keybind.mode
                         self._tree[tabName]._items[sectionName]._items[itemId].keybind.value = newValue
                         self._tree[tabName]._items[sectionName]._items[itemId].keybind.mode = kmode
@@ -478,12 +406,10 @@ do
             type_ = 'slider', label = label, value = value, step = step,
             min = min, max = max, suffix = suffix or '', callback = callback,
             _mini_tab = miniTab,
-            _draw_id = sectionContent._draw_id .. '_item_' .. tostring(itemId),
         }
         table.insert(sectionContent._items, item)
         return {
             Set = function(_, newValue)
-                self._is_dirty = true
                 self._tree[tabName]._items[sectionName]._items[itemId].value = newValue
                 if self._tree[tabName]._items[sectionName]._items[itemId].callback then
                     self._tree[tabName]._items[sectionName]._items[itemId].callback(newValue)
@@ -502,12 +428,10 @@ do
             type_ = 'dropdown', label = label, value = value,
             choices = choices, multi = multi, callback = callback,
             _mini_tab = miniTab,
-            _draw_id = sectionContent._draw_id .. '_item_' .. tostring(itemId),
         }
         table.insert(sectionContent._items, item)
         return {
             Set = function(_, newValue)
-                self._is_dirty = true
                 self._tree[tabName]._items[sectionName]._items[itemId].value = newValue
                 if self._tree[tabName]._items[sectionName]._items[itemId].callback then
                     self._tree[tabName]._items[sectionName]._items[itemId].callback(newValue)
@@ -525,7 +449,7 @@ do
     function UILib:_Button(tabName, sectionName, label, callback, miniTab)
         local sectionContent = self._tree[tabName]._items[sectionName]
         local itemId = #sectionContent._items + 1
-        local item = { type_ = 'button', label = label, callback = callback, _mini_tab = miniTab, _draw_id = sectionContent._draw_id .. '_item_' .. tostring(itemId) }
+        local item = { type_ = 'button', label = label, callback = callback, _mini_tab = miniTab }
         table.insert(sectionContent._items, item)
         return {
             SetTextColor = function(_, color)
@@ -539,14 +463,13 @@ do
         local itemId = #sectionContent._items + 1
         local item = {
             type_ = 'textbox', label = label, value = value,
+            autocomplete = autocomplete or {},
             callback = callback,
             _mini_tab = miniTab,
-            _draw_id = sectionContent._draw_id .. '_item_' .. tostring(itemId),
         }
         table.insert(sectionContent._items, item)
         return {
             Set = function(_, newValue)
-                self._is_dirty = true
                 self._tree[tabName]._items[sectionName]._items[itemId].value = newValue
                 if self._tree[tabName]._items[sectionName]._items[itemId].callback then
                     self._tree[tabName]._items[sectionName]._items[itemId].callback(newValue)
@@ -564,12 +487,10 @@ do
         local item = {
             type_ = 'label', label = text, text_color = color,
             _mini_tab = miniTab,
-            _draw_id = sectionContent._draw_id .. '_item_' .. tostring(itemId),
         }
         table.insert(sectionContent._items, item)
         return {
             SetText = function(_, newText)
-                self._is_dirty = true
                 self._tree[tabName]._items[sectionName]._items[itemId].label = newText
             end,
             SetTextColor = function(_, newColor)
@@ -579,9 +500,7 @@ do
     end
 
     function UILib:_Section(tabName, sectionName)
-        self._draw_id_counter = (self._draw_id_counter or 0) + 1
-        local sectionDrawId = 'menu_section_' .. tostring(self._draw_id_counter)
-        self._tree[tabName]._items[sectionName] = { _items = {}, _draw_id = sectionDrawId }
+        self._tree[tabName]._items[sectionName] = { _items = {} }
         table.insert(self._tree[tabName]._section_order, sectionName)
         return {
             Toggle = function(_, ...) return self:_Toggle(tabName, sectionName, ...) end,
@@ -595,13 +514,10 @@ do
 
     function UILib:_TabbedSection(tabName, miniTabNames)
         local sectionName = table.concat(miniTabNames, '|')
-        self._draw_id_counter = (self._draw_id_counter or 0) + 1
-        local sectionDrawId = 'menu_section_' .. tostring(self._draw_id_counter)
         self._tree[tabName]._items[sectionName] = {
             _items = {},
             _mini_tabs = miniTabNames,
             _active_mini_tab = miniTabNames[1],
-            _draw_id = sectionDrawId,
         }
         table.insert(self._tree[tabName]._section_order, sectionName)
         local result = {}
@@ -631,10 +547,10 @@ do
     end
 
     function UILib:GetMenuSize() return Vector2.new(self.w, self.h) end
-    function UILib:SetWatermarkEnabled(value) self._watermark_enabled = value; self._is_dirty = true end
-    function UILib:SetMenuTitle(newTitle) self.title = newTitle; self._is_dirty = true end
-    function UILib:SetMenuPosition(newPos) self.x = newPos.x or self.x; self.y = newPos.y or self.y; self._is_dirty = true end
-    function UILib:SetMenuSize(newSize) self.w = newSize.x or self.w; self.h = newSize.y or self.h; self._is_dirty = true end
+    function UILib:SetWatermarkEnabled(value) self._watermark_enabled = value end
+    function UILib:SetMenuTitle(newTitle) self.title = newTitle end
+    function UILib:SetMenuPosition(newPos) self.x = newPos.x or self.x; self.y = newPos.y or self.y end
+    function UILib:SetMenuSize(newSize) self.w = newSize.x or self.x; self.h = newSize.y or self.y end
 
     function UILib:CenterMenu()
         local screenSize = self:_GetScreenSize()
@@ -646,7 +562,6 @@ do
         local item = { text = text, time = time, _id = self._notifications_spawned, _spawned_at = os.clock() }
         table.insert(self._notifications, item)
         self._notifications_spawned = self._notifications_spawned + 1
-        self._is_dirty = true
     end
 
     function UILib:SetTabOrder(order)
@@ -654,9 +569,7 @@ do
     end
 
     function UILib:Tab(tabName)
-        self._draw_id_counter = (self._draw_id_counter or 0) + 1
-        local tabDrawId = 'menu_tab_' .. tostring(self._draw_id_counter)
-        self._tree[tabName] = { _items = {}, _section_order = {}, _draw_id = tabDrawId }
+        self._tree[tabName] = { _items = {}, _section_order = {} }
         table.insert(self._tab_order, tabName)
         if not self._open_tab then self._open_tab = tabName end
         return {
@@ -785,30 +698,18 @@ do
 
         setrobloxinput(not self._menu_open or not self._block_roblox_input)
 
-        self._inputs['m1']._is_bound = true
-        self._inputs['m2']._is_bound = true
-        if self._menu_key and self._inputs[self._menu_key] then
-            self._inputs[self._menu_key]._is_bound = true
-        end
-
-        local anyInputTriggered = false
-        local pollAll = self._listening_keybind ~= nil or self._input_ctx ~= nil
-
         for keycode, inputData in pairs(self._inputs) do
-            if inputData._is_bound or pollAll then
-                local interacted = iskeypressed(inputData.id)
-                if windowActive and interacted then
-                    if inputData.held == false and inputData.click == false then
-                        inputData.click = true
-                    else
-                        inputData.click = false
-                    end
-                    inputData.held = true
-                    anyInputTriggered = true
+            local interacted = iskeypressed(inputData.id)
+            if windowActive and interacted and isrbxactive() then
+                if inputData.held == false and inputData.click == false then
+                    inputData.click = true
                 else
                     inputData.click = false
-                    inputData.held = false
                 end
+                inputData.held = true
+            else
+                inputData.click = false
+                inputData.held = false
             end
         end
 
@@ -832,23 +733,19 @@ do
                             if kb.mode == 'Toggle' then
                                 if boundKey.click then
                                     sectionItem.value = not sectionItem.value
-                                    self._is_dirty = true
                                     if sectionItem.callback then sectionItem.callback(sectionItem.value) end
                                 end
                             elseif kb.mode == 'Hold' then
                                 if boundKey.held and not sectionItem.value then
                                     sectionItem.value = true
-                                    self._is_dirty = true
                                     if sectionItem.callback then sectionItem.callback(true) end
                                 elseif not boundKey.held and sectionItem.value then
                                     sectionItem.value = false
-                                    self._is_dirty = true
                                     if sectionItem.callback then sectionItem.callback(false) end
                                 end
                             elseif kb.mode == 'Always' then
                                 if not sectionItem.value then
                                     sectionItem.value = true
-                                    self._is_dirty = true
                                     if sectionItem.callback then sectionItem.callback(true) end
                                 end
                             end
@@ -858,44 +755,16 @@ do
             end
         end
 
-        local watermarkStatesChanged = false
-        self._activity_cache = self._activity_cache or {}
-        for i, activity in ipairs(self._activities) do
+        local watermarkPos = Vector2.new(20, 20)
+        local watermarkContent = self._custom_title_enabled and self._custom_title or self.title
+        local watermarkStates = {watermarkContent}
+        for _, activity in ipairs(self._activities) do
             if type(activity) == 'function' then
                 local res = activity()
-                local activityString = res ~= nil and tostring(res) or nil
-                if self._activity_cache[i] ~= activityString then
-                    self._activity_cache[i] = activityString
-                    watermarkStatesChanged = true
-                end
+                if type(res) ~= 'nil' then table.insert(watermarkStates, tostring(res)) end
             end
         end
-        if self._custom_title_enabled and self._custom_title ~= self._last_watermark_title then
-            self._last_watermark_title = self._custom_title
-            watermarkStatesChanged = true
-        elseif not self._custom_title_enabled and self.title ~= self._last_watermark_title then
-            self._last_watermark_title = self.title
-            watermarkStatesChanged = true
-        end
-
-        if not self._watermark_content or watermarkStatesChanged then
-            local states = {self._last_watermark_title}
-            for i = 1, #self._activities do
-                if self._activity_cache[i] then table.insert(states, self._activity_cache[i]) end
-            end
-            self._watermark_content = table.concat(states, ' | ')
-        end
-
-        local isFading = (os.clock() - self._menu_toggled_at) < 0.3 or (os.clock() - self._tab_change_at) < 0.3
-        local isDragging = self._slider_drag ~= nil or self._menu_drag ~= nil
-        local hasNotifications = #self._notifications > 0
-        local shouldRender = self._is_dirty or self._mouse_moved or isFading or pollAll or isDragging or hasNotifications or watermarkStatesChanged or anyInputTriggered or not self._menu_open
-
-        if not shouldRender then return end
-        self._is_dirty = false
-
-        local watermarkPos = Vector2.new(20, 20)
-        local watermarkContent = self._watermark_content
+        watermarkContent = table.concat(watermarkStates, ' | ')
         local watermarkSize = self:_GetTextBounds(watermarkContent) + Vector2.new(self._padding * 2, self._padding * 2)
         if self._watermark_enabled then
             self:_Draw('watermark_crust', 'rect', self._theming.crust, 102, watermarkPos, watermarkSize, false)
@@ -909,7 +778,6 @@ do
 
         local notificationsOrigin = watermarkPos + (self._watermark_enabled and Vector2.new(0, watermarkSize.y + self._padding) or Vector2.new(0, 0))
         local totalNotificationsHeight = 0
-        local toRemove = {}
         for notificationIter, notification in ipairs(self._notifications) do
             local shouldFade = os.clock() > notification._spawned_at + notification.time
             local notificationText = notification.text
@@ -917,12 +785,7 @@ do
             local t = math.max(0, math.min(notification._spawned_at - os.clock() + (shouldFade and notification.time + 1 or 1), 1))
             local notificationFade = math.abs((shouldFade and 0 or 1) - (t * t * (3 - 2 * t)))
             local notificationDrawId = 'notification_' .. notification._id
-            
-            local nfKey = math.floor(notificationFade * 100) / 100
-            if notification._last_fade ~= nfKey then
-                notification._last_fade = nfKey
-                self:_SetOpacityStartsWith(notificationDrawId, notificationFade)
-            end
+            self:_SetOpacityStartsWith(notificationDrawId, notificationFade)
 
             local notificationSize = Vector2.new(notificationTextSize.x + self._padding * 2, notificationTextSize.y + self._padding * 2)
             local notificationOrigin = notificationsOrigin + Vector2.new((-notificationSize.x - 50) * (1 - notificationFade), totalNotificationsHeight)
@@ -935,11 +798,8 @@ do
             totalNotificationsHeight = totalNotificationsHeight + (notificationTextSize.y + self._padding * 3) * notificationFade
             if os.clock() - 1 > notification._spawned_at + notification.time then
                 self:_RemoveDrawStartsWith(notificationDrawId)
-                table.insert(toRemove, notificationIter)
+                table.remove(self._notifications, notificationIter)
             end
-        end
-        for i = #toRemove, 1, -1 do
-            table.remove(self._notifications, toRemove[i])
         end
 
         if self._menu_open then
@@ -1680,5 +1540,3 @@ do
         return true
     end
 end
-
-return UILib
