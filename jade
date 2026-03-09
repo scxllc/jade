@@ -669,6 +669,29 @@ do
             end
         end)
 
+        local fontMapping = {
+            ['ProggyClean'] = Drawing.Fonts.UI,
+            ['San Francisco'] = Drawing.Fonts.System,
+            ['SF Bold'] = Drawing.Fonts.SystemBold,
+            ['Minecraft'] = Drawing.Fonts.Minecraft,
+            ['JetBrains'] = Drawing.Fonts.Monospace,
+            ['Pixel'] = Drawing.Fonts.Pixel,
+            ['Fortnite'] = Drawing.Fonts.Fortnite
+        }
+        local fontNames = {'ProggyClean', 'San Francisco', 'SF Bold', 'Minecraft', 'JetBrains', 'Pixel', 'Fortnite'}
+        local currentFontName = 'ProggyClean'
+        for k, v in pairs(fontMapping) do
+            if v == self._font_face then currentFontName = k break end
+        end
+        local themingFont = themingSection:Dropdown('Font', {currentFontName}, fontNames, false, function(newValue)
+            if not newValue or not newValue[1] then return end
+            local fontName = newValue[1]
+            local fontEnum = fontMapping[fontName]
+            if fontEnum then
+                self._font_face = fontEnum
+            end
+        end)
+
         local themingText = themingSection:Toggle('Text color')
         themingTextColor = themingText:AddColorpicker('Text color', self._theming.text, true, function(newValue) self._theming.text = newValue end)
         local themingBody = themingSection:Toggle('Body color')
@@ -881,6 +904,7 @@ do
                                         if val.keybind ~= nil and item.keybind then item.keybind.value = val.keybind end
                                         if val.colorpicker ~= nil and val.colorpicker.R and val.colorpicker.G and val.colorpicker.B and item.colorpicker then
                                             item.colorpicker.value = Color3.new(val.colorpicker.R, val.colorpicker.G, val.colorpicker.B)
+                                            if item.colorpicker.callback then item.colorpicker.callback(item.colorpicker.value) end
                                         end
                                         if item.callback then item.callback(item.value) end
                                     elseif (item.type_ == 'slider' or item.type_ == 'dropdown' or item.type_ == 'textbox') then
