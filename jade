@@ -691,7 +691,6 @@ do
     end
 
     function UILib:Step()
-        self:_UpdateMousePos()
         local menuTitle = self._custom_title_enabled and self._custom_title or self.title
         local hoveredTooltip = nil
         local windowActive = isrbxactive()
