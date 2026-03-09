@@ -696,7 +696,117 @@ do
         themingCrustColor = themingCrust:AddColorpicker('Crust color', self._theming.crust, true, function(newValue) self._theming.crust = newValue end)
 
         themingTheme:Set({'Jade'})
-        return settingsTab, menuSection, themingSection
+
+        local configSection = settingsTab:Section('Config')
+        self._config_name = 'default'
+        configSection:Textbox('Config Name', self._config_name, function(newValue)
+            self._config_name = newValue
+        end)
+        configSection:Button('Save Config', function()
+            self:SaveConfig(self._config_name)
+        end)
+        configSection:Button('Load Config', function()
+            self:LoadConfig(self._config_name)
+        end)
+
+        return settingsTab, menuSection, themingSection, configSection
+    end
+
+    function UILib:GetConfigData()
+        local data = {}
+        for tabName, tabContent in pairs(self._tree) do
+            if tabName == 'Menu' then continue end
+            data[tabName] = {}
+            for _, sectionName in ipairs(tabContent._section_order) do
+                local sectionContent = tabContent._items[sectionName]
+                data[tabName][sectionName] = {}
+                for _, item in ipairs(sectionContent._items) do
+                    if item.type_ == 'toggle' then
+                        data[tabName][sectionName][item.label] = { 
+                            value = item.value, 
+                            keybind = item.keybind and item.keybind.value, 
+                            colorpicker = item.colorpicker and { R = item.colorpicker.value.R, G = item.colorpicker.value.G, B = item.colorpicker.value.B } 
+                        }
+                    elseif item.type_ == 'slider' or item.type_ == 'dropdown' or item.type_ == 'textbox' then
+                        data[tabName][sectionName][item.label] = item.value
+                    end
+                end
+            end
+        end
+        return data
+    end
+
+    function UILib:SaveConfig(filename)
+        local success, err = pcall(function()
+            local HttpService = game:GetService("HttpService")
+            local data = self:GetConfigData()
+            local json = HttpService:JSONEncode(data)
+
+            pcall(makefolder, "Jade")
+            pcall(makefolder, "Jade/Configs")
+
+            local safeName = string.gsub(filename, "[^%w%s]", "")
+            local path = "Jade/Configs/" .. safeName .. ".json"
+
+            writefile(path, json)
+            return path
+        end)
+
+        if success then
+            self:Notification("Saved config successfully", 3)
+        else
+            self:Notification("Failed to save config", 3)
+        end
+    end
+
+    function UILib:LoadConfig(filename)
+        local safeName = string.gsub(filename, "[^%w%s]", "")
+        local path = "Jade/Configs/" .. safeName .. ".json"
+        
+        local ok, content = pcall(readfile, path)
+        if not ok or type(content) ~= "string" or content == "" then 
+            self:Notification("Config not found", 3)
+            return false
+        end
+
+        local decodeSuccess, data = pcall(function()
+            return game:GetService("HttpService"):JSONDecode(content)
+        end)
+
+        if not decodeSuccess or type(data) ~= "table" then
+            self:Notification("Failed to parse config", 3)
+            return false
+        end
+
+        for tabName, tabData in pairs(data) do
+            if type(tabData) == "table" and self._tree[tabName] then
+                for sectionName, secData in pairs(tabData) do
+                    if type(secData) == "table" and self._tree[tabName]._items[sectionName] then
+                        for _, item in ipairs(self._tree[tabName]._items[sectionName]._items) do
+                            local val = secData[item.label]
+                            if val ~= nil then
+                                pcall(function()
+                                    if item.type_ == 'toggle' and type(val) == 'table' then
+                                        if val.value ~= nil then item.value = val.value end
+                                        if val.keybind ~= nil and item.keybind then item.keybind.value = val.keybind end
+                                        if val.colorpicker ~= nil and val.colorpicker.R and val.colorpicker.G and val.colorpicker.B and item.colorpicker then
+                                            item.colorpicker.value = Color3.new(val.colorpicker.R, val.colorpicker.G, val.colorpicker.B)
+                                        end
+                                        if item.callback then item.callback(item.value) end
+                                    elseif (item.type_ == 'slider' or item.type_ == 'dropdown' or item.type_ == 'textbox') then
+                                        item.value = val
+                                        if item.callback then item.callback(item.value) end
+                                    end
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        self:Notification("Config loaded", 3)
+        return true
     end
 
     function UILib:RegisterActivity(activity)
