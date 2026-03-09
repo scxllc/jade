@@ -36,7 +36,7 @@ UILib = {
     _custom_title_enabled = false,
     _custom_title = '',
     w = 480,
-    h = 480,
+    h = 580,
     x = 20,
     y = 100,
     _padding = 8,
@@ -723,6 +723,10 @@ do
 
         configSection:Button('Load Selected', function()
             self:LoadConfig(self._config_name)
+        end)
+
+        configSection:Button('Update Selected', function()
+            self:SaveConfig(self._config_name)
         end)
 
         configSection:Textbox('New Config Name', '', function(newValue)
