@@ -729,16 +729,51 @@ do
             if newValue ~= '' then self._config_name = newValue end
         end)
 
+        local _delete_targets = {}
+        local configDeleteDropdown = configSection:Dropdown('Configs to Delete', {}, savedConfigs, true, function(newValue)
+            _delete_targets = newValue or {}
+        end)
+
         configSection:Button('Save Config', function()
             self:SaveConfig(self._config_name)
             local newConfigs = GetConfigs()
             configDropdown:UpdateChoices(newConfigs)
             configDropdown:Set({self._config_name})
+            configDeleteDropdown:UpdateChoices(newConfigs)
+        end)
+
+        configSection:Button('Delete Selected', function()
+            if #_delete_targets == 0 then
+                self:Notification("No configs selected", 3)
+                return
+            end
+            local removedCount = 0
+            for _, configName in ipairs(_delete_targets) do
+                local safeName = string.gsub(configName, "[^%w%s]", "")
+                local path = "Jade/Configs/" .. safeName .. ".json"
+                local success, err = pcall(delfile, path)
+                if success then removedCount = removedCount + 1 end
+            end
+            if removedCount > 0 then
+                self:Notification("Deleted " .. tostring(removedCount) .. " config(s)", 3)
+                local newConfigs = GetConfigs()
+                configDropdown:UpdateChoices(newConfigs)
+                configDeleteDropdown:UpdateChoices(newConfigs)
+                if not table.find(newConfigs, self._config_name) then
+                    self._config_name = newConfigs[1]
+                    configDropdown:Set({self._config_name})
+                end
+                configDeleteDropdown:Set({})
+                _delete_targets = {}
+            else
+                self:Notification("Failed to delete", 3)
+            end
         end)
 
         configSection:Button('Refresh List', function()
             local newConfigs = GetConfigs()
             configDropdown:UpdateChoices(newConfigs)
+            configDeleteDropdown:UpdateChoices(newConfigs)
             if not table.find(newConfigs, self._config_name) then
                 self._config_name = newConfigs[1]
                 configDropdown:Set({self._config_name})
