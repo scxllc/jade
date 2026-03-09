@@ -1,2084 +1,1743 @@
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/scxllc/jade/refs/heads/main/jade'))()
-    local runServiceVM = loadstring(game:HttpGet('https://pastebin.com/raw/jFXZEJSy'))()
+--[[
 
-    local ui = UILib
-    if not ui then return end
-    if type(runServiceVM) ~= "table" then runServiceVM = nil end
-
-    local players   = game:GetService("Players")
-    local workspace = game:GetService("Workspace")
-    local player    = players.LocalPlayer
+    jade ui library
+    forked from nulare's library
 
 
-    local config = {
-        itemCacheRefreshInterval = 0.75,
-        fallbackDeltaTime        = 0.016,
-        maxTrackedItems          = 300,
-        maxRenderedItems         = 150,
-        addressRetentionSeconds  = 240,
-        safeSpot                 = Vector3.new(1077.64, 936.01, -1391.41),
-        npcMaxDistance            = 1000,
-        lockYValue               = -410,
-        lockMoveRange            = 100,
-        lockMoveSpeed            = 520,
-    }
+]]
 
-    local trackedItems = {
-        { name = "Stone Mask",                short = "Stone Mask",       color = Color3.fromRGB(200, 200, 200) },
-        { name = "Imperfect Aja",             short = "Imperfect Aja",    color = Color3.fromRGB(255, 80,  80)  },
-        { name = "Red Stone of Aja",          short = "Red Stone of Aja", color = Color3.fromRGB(255, 30,  30)  },
-        { name = "Lucky Arrow",               short = "Lucky Arrow",      color = Color3.fromRGB(255, 215, 0)   },
-        { name = "Rokakaka",                  short = "Rokakaka",         color = Color3.fromRGB(0,   200, 80)  },
-        { name = "Stat Point Essence",        short = "Stat Pt Essence",  color = Color3.fromRGB(80,  160, 255) },
-        { name = "Stand Arrow",               short = "Stand Arrow",      color = Color3.fromRGB(255, 165, 0)   },
-        { name = "DIO's Diary",               short = "DIO's Diary",      color = Color3.fromRGB(180, 0,   255) },
-        { name = "Stand Skin Essence",        short = "Skin Essence",     color = Color3.fromRGB(255, 100, 200) },
-        { name = "Stand Stat Essence",        short = "Stat Essence",     color = Color3.fromRGB(100, 220, 255) },
-        { name = "Stand Personality Essence", short = "Pers Essence",     color = Color3.fromRGB(255, 200, 100) },
-        { name = "Stand Conjuration Essence", short = "Conj Essence",     color = Color3.fromRGB(160, 100, 255) },
-        { name = "Motorcycle Tire",           short = "Moto Tire",        color = Color3.fromRGB(120, 120, 120) },
-        { name = "Motorcycle Body",           short = "Moto Body",        color = Color3.fromRGB(80,  80,  80)  },
-        { name = "Custom Clothing Essence",   short = "Clothing Ess",     color = Color3.fromRGB(255, 150, 50)  },
-        { name = "Lucky Personality Essence", short = "Lucky Pers Ess",   color = Color3.fromRGB(255, 255, 50)  },
-        { name = "Face Reroll",               short = "Face Reroll",      color = Color3.fromRGB(50,  255, 200) },
-    }
+UILib = {
+    _font_face = Drawing.Fonts.UI,
+    _font_size = 13,
+    _drawings = {},
+    _tree = {},
+    _tab_order = {},
+    _menu_open = true,
+    _menu_toggled_at = 0,
+    _watermark_enabled = true,
+    _notifications = {},
+    _notifications_spawned = 0,
+    _open_tab = nil,
+    _tab_change_at = 0,
+    _inputs = {['m1']={id=0x01,held=false,click=false},['m2']={id=0x02,held=false,click=false},['mb']={id=0x04,held=false,click=false},['mb4']={id=0x05,held=false,click=false},['mb5']={id=0x06,held=false,click=false},['unbound']={id=0x08,held=false,click=false},['tab']={id=0x09,held=false,click=false},['enter']={id=0x0D,held=false,click=false},['shift']={id=0x10,held=false,click=false},['ctrl']={id=0x11,held=false,click=false},['alt']={id=0x12,held=false,click=false},['pause']={id=0x13,held=false,click=false},['capslock']={id=0x14,held=false,click=false},['esc']={id=0x1B,held=false,click=false},['space']={id=0x20,held=false,click=false},['pageup']={id=0x21,held=false,click=false},['pagedown']={id=0x22,held=false,click=false},['end']={id=0x23,held=false,click=false},['home']={id=0x24,held=false,click=false},['left']={id=0x25,held=false,click=false},['up']={id=0x26,held=false,click=false},['right']={id=0x27,held=false,click=false},['down']={id=0x28,held=false,click=false},['insert']={id=0x2D,held=false,click=false},['delete']={id=0x2E,held=false,click=false},['0']={id=0x30,held=false,click=false},['1']={id=0x31,held=false,click=false},['2']={id=0x32,held=false,click=false},['3']={id=0x33,held=false,click=false},['4']={id=0x34,held=false,click=false},['5']={id=0x35,held=false,click=false},['6']={id=0x36,held=false,click=false},['7']={id=0x37,held=false,click=false},['8']={id=0x38,held=false,click=false},['9']={id=0x39,held=false,click=false},['a']={id=0x41,held=false,click=false},['b']={id=0x42,held=false,click=false},['c']={id=0x43,held=false,click=false},['d']={id=0x44,held=false,click=false},['e']={id=0x45,held=false,click=false},['f']={id=0x46,held=false,click=false},['g']={id=0x47,held=false,click=false},['h']={id=0x48,held=false,click=false},['i']={id=0x49,held=false,click=false},['j']={id=0x4A,held=false,click=false},['k']={id=0x4B,held=false,click=false},['l']={id=0x4C,held=false,click=false},['m']={id=0x4D,held=false,click=false},['n']={id=0x4E,held=false,click=false},['o']={id=0x4F,held=false,click=false},['p']={id=0x50,held=false,click=false},['q']={id=0x51,held=false,click=false},['r']={id=0x52,held=false,click=false},['s']={id=0x53,held=false,click=false},['t']={id=0x54,held=false,click=false},['u']={id=0x55,held=false,click=false},['v']={id=0x56,held=false,click=false},['w']={id=0x57,held=false,click=false},['x']={id=0x58,held=false,click=false},['y']={id=0x59,held=false,click=false},['z']={id=0x5A,held=false,click=false},['numpad0']={id=0x60,held=false,click=false},['numpad1']={id=0x61,held=false,click=false},['numpad2']={id=0x62,held=false,click=false},['numpad3']={id=0x63,held=false,click=false},['numpad4']={id=0x64,held=false,click=false},['numpad5']={id=0x65,held=false,click=false},['numpad6']={id=0x66,held=false,click=false},['numpad7']={id=0x67,held=false,click=false},['numpad8']={id=0x68,held=false,click=false},['numpad9']={id=0x69,held=false,click=false},['multiply']={id=0x6A,held=false,click=false},['add']={id=0x6B,held=false,click=false},['separator']={id=0x6C,held=false,click=false},['subtract']={id=0x6D,held=false,click=false},['decimal']={id=0x6E,held=false,click=false},['divide']={id=0x6F,held=false,click=false},['f1']={id=0x70,held=false,click=false},['f2']={id=0x71,held=false,click=false},['f3']={id=0x72,held=false,click=false},['f4']={id=0x73,held=false,click=false},['f5']={id=0x74,held=false,click=false},['f6']={id=0x75,held=false,click=false},['f7']={id=0x76,held=false,click=false},['f8']={id=0x77,held=false,click=false},['f9']={id=0x78,held=false,click=false},['f10']={id=0x79,held=false,click=false},['f11']={id=0x7A,held=false,click=false},['f12']={id=0x7B,held=false,click=false},['numlock']={id=0x90,held=false,click=false},['scrolllock']={id=0x91,held=false,click=false},['lshift']={id=0xA0,held=false,click=false},['rshift']={id=0xA1,held=false,click=false},['lctrl']={id=0xA2,held=false,click=false},['rctrl']={id=0xA3,held=false,click=false},['lalt']={id=0xA4,held=false,click=false},['ralt']={id=0xA5,held=false,click=false},['semicolon']={id=0xBA,held=false,click=false},['plus']={id=0xBB,held=false,click=false},['comma']={id=0xBC,held=false,click=false},['minus']={id=0xBD,held=false,click=false},['period']={id=0xBE,held=false,click=false},['slash']={id=0xBF,held=false,click=false},['tilde']={id=0xC0,held=false,click=false},['lbracket']={id=0xDB,held=false,click=false},['backslash']={id=0xDC,held=false,click=false},['rbracket']={id=0xDD,held=false,click=false},['quote']={id=0xDE,held=false,click=false}},
+    _slider_drag = nil,
+    _menu_drag = nil,
+    _input_ctx = nil,
+    _overwrite_menu_key = false,
+    _menu_key = 'f1',
+    _active_dropdown = nil,
+    _active_colorpicker = nil,
+    _copied_color = nil,
+    _tooltip_hover_time = nil,
+    _tooltip_mouse_prev = nil,
+    _activities = {},
 
-    local trackedItemLookup = {}
-    for _, item in ipairs(trackedItems) do
-        trackedItemLookup[item.name] = true
+    title = 'jade',
+    _custom_title_enabled = false,
+    _custom_title = '',
+    w = 480,
+    h = 680,
+    x = 20,
+    y = 100,
+    _padding = 8,
+    _tab_h = 30,
+    _tab_w = 90,
+    _block_roblox_input = true,
+    _theming = {
+        accent = Color3.fromRGB(0, 200, 120),
+        unsafe = Color3.fromRGB(255, 215, 0),
+        body = Color3.fromRGB(0, 0, 0),
+        text = Color3.fromRGB(210, 210, 210),
+        subtext = Color3.fromRGB(75, 75, 75),
+        border1 = Color3.fromRGB(25, 25, 25),
+        border0 = Color3.fromRGB(16, 16, 16),
+        surface1 = Color3.fromRGB(14, 14, 14),
+        surface0 = Color3.fromRGB(8, 8, 8),
+        crust = Color3.fromRGB(0, 0, 0),
+    },
+}
+
+local function clamp(x, a, b)
+    if x > b then
+        return b
+    elseif x < a then
+        return a
+    else
+        return x
+    end
+end
+
+local function getDictLength(dict)
+    local i = 0
+    for _ in pairs(dict) do
+        i = i + 1
+    end
+    return i
+end
+
+local function rgbToHsv(r, g, b)
+    local max = math.max(r, g, b)
+    local min = math.min(r, g, b)
+    local h, s, v = 0, 0, max
+    local d = max - min
+
+    if max ~= 0 then
+        s = d / max
     end
 
-    local trackedItemNames = {}
-    for _, item in ipairs(trackedItems) do
-        table.insert(trackedItemNames, item.name)
+    if d == 0 then
+        h = 0
+    else
+        if max == r then
+            h = (g - b) / d
+            if g < b then
+                h = h + 6
+            end
+        elseif max == g then
+            h = (b - r) / d + 2
+        elseif max == b then
+            h = (r - g) / d + 4
+        end
+        h = h / 6
     end
 
+    return h, s, v
+end
 
-    local state = {
-        shouldUnload             = false,
-        itemESP                  = false,
-        espShowBox               = true,
-        espShowName              = true,
-        espShowDistance           = true,
-        espShowTracers           = false,
-        itemCacheRefreshInterval = 0.2,
-        maxRenderedItems         = config.maxRenderedItems,
-        itemCache                = {},
-        itemCacheLastRefresh     = 0,
-        seenItemAddresses        = {},
-        itemScanInitialized      = false,
-        itemColors               = {},
-
-        frameErrorCount          = 0,
-        runtimeCooldownUntil     = 0,
-
-        autoCollect              = false,
-        stealthCollect            = false,
-        collectSafeSpot          = false,
-        collectTargetNames       = {},
-        collectThread            = nil,
-        poseInSafespot           = false,
-
-        raidTarget               = nil,
-        npcKillerEnabled         = false,
-        npcTargetName            = "Nearest",
-        npcMethod                = "Top",
-        orbitRadius              = 8,
-        orbitSpeed               = 2,
-        orbitThread              = nil,
-        underDepth               = 5,
-        underThread              = nil,
-        backDistance              = 6,
-        backThread               = nil,
-        topHeight                = 8,
-        topThread                = nil,
-
-        autoSummonStand          = false,
-        autoSummonThread         = nil,
-
-        autoStandRoll            = false,
-        stopOnAnySkin            = false,
-        targetStandRoll          = "Star Platinum",
-        standRollThread          = nil,
-
-        playerStandESP           = false,
-        standESPColor            = Color3.fromRGB(255, 200, 50),
-
-        autoPveQuest             = false,
-        autoPveThread            = nil,
-
-        voidDioThread            = nil,
-
-        -- Bizarre Hub Additions
-        autoAttack               = false,
-        autoAttackThread         = nil,
-        freezeAnimations         = false,
-        savedAnimate             = nil,
-        savedAnimator            = nil,
-        savedAnimParent          = nil,
-        savedAnimrParent         = nil,
-        autoMeditate             = false,
-        meditateTarget           = nil,
-        autoMeditateThread       = nil,
-        autoPlay                 = false,
-        autoPlayThread           = nil,
-        autoReplay               = false,
-        autoReplayThread         = nil,
-        autoPvP                  = false,
-        pvpTargetName            = "",
-        pvpTarget                = nil,
-        pvpHeightOffset          = 10,
-        pvpHeightDirection       = -1, -- Default Down
-        autoPvPThread            = nil,
-    }
-
-    for _, item in ipairs(trackedItems) do
-        state.itemColors[item.name] = item.color
-    end
-
-    if _G.__bizzareLineageUnload then
-        pcall(_G.__bizzareLineageUnload)
-        task.wait(0.05)
-    end
-
-    local itemDrawings = {}
-
-
-    local function distance3D(a, b)
-        local dx = a.X - b.X
-        local dy = a.Y - b.Y
-        local dz = a.Z - b.Z
-        return math.sqrt(dx*dx + dy*dy + dz*dz)
-    end
-
-
-    local function resolveWorldPosition(instance)
-        if not instance then return nil end
-        if instance:IsA("BasePart") then return instance.Position end
-        if instance:IsA("Model") and instance.PrimaryPart then return instance.PrimaryPart.Position end
-        local p = instance:FindFirstChildWhichIsA("BasePart")
-        if p then return p.Position end
-        for _, d in ipairs(instance:GetDescendants()) do
-            if d:IsA("BasePart") then return d.Position end
+do
+    function UILib:_KeyIDToName(keyId)
+        for keyName, key in pairs(self._inputs) do
+            if key.id == keyId then
+                return keyName
+            end
         end
         return nil
     end
 
-    local function getItemAddressKey(instance)
-        local ok, addr = pcall(function() return instance.Address end)
-        if ok and addr then return string.format("0x%X", addr) end
-        local ok2, full = pcall(function() return instance:GetFullName() end)
-        if ok2 and full then return full end
-        return tostring(instance)
+    function UILib:_IsKeyPressed(keycode)
+        return self._inputs[keycode].click
     end
 
-    local function getRootPart()
-        local char = player and player.Character
-        if not char then return nil end
-        return char:FindFirstChild("HumanoidRootPart")
-            or char:FindFirstChild("Torso")
-            or char:FindFirstChild("UpperTorso")
+    function UILib:_IsKeyHeld(keycode)
+        return self._inputs[keycode].held
     end
 
-    local function teleportTo(pos)
-        local root = getRootPart()
-        if root then
-            pcall(function() root.Position = pos end)
+    function UILib:_GetScreenSize()
+        local screenSize = Vector2.new(1920, 1080)
+        local camera = workspace.CurrentCamera
+        if camera and camera.ViewportSize then
+            screenSize = camera.ViewportSize
         end
+        return screenSize
     end
 
-
-
-    local function setLockYPosition(forceExact)
-        local root = getRootPart()
-        if not root then return end
-        local pos = root.Position
-        if forceExact or pos.Y < config.lockYValue then
-            pcall(function() root.Position = Vector3.new(pos.X, config.lockYValue, pos.Z) end)
-            pcall(function()
-                local vel = root.AssemblyLinearVelocity
-                if vel then root.AssemblyLinearVelocity = Vector3.new(vel.X, 0, vel.Z) end
-            end)
+    function UILib:_GetMousePos()
+        local mousePos = Vector2.new()
+        local myPlayer = game:GetService('Players').LocalPlayer
+        if myPlayer then
+            local myMouse = myPlayer:GetMouse()
+            if myMouse then
+                mousePos = Vector2.new(myMouse.X, myMouse.Y)
+            end
         end
+        return mousePos
     end
 
-    local function voidDioLoop()
-        while state.voidDio and not state.shouldUnload do
-            pcall(function()
-                local root = getRootPart()
-                if not root then return end
-                if not state.lockMotionOrigin then
-                    local pos = root.Position
-                    state.lockMotionOrigin = Vector3.new(pos.X, config.lockYValue, pos.Z)
+    function UILib:_IsMouseWithinBounds(origin, size)
+        local mousePos = self:_GetMousePos()
+        return mousePos.x >= origin.x and mousePos.x <= origin.x + size.x and mousePos.y >= origin.y and mousePos.y <= origin.y + size.y
+    end
+end
+
+do
+    function UILib:_GetTextBounds(text, fontFace, fontSize)
+        fontFace = fontFace or self._font_face
+        fontSize = fontSize or self._font_size
+        if fontFace == Drawing.Fonts.UI then
+            return Vector2.new(#text * fontSize * 0.53846, fontSize)
+        end
+        return Vector2.new(#text * fontSize, fontSize)
+    end
+
+    function UILib:_Lerp(a, b, t)
+        return a + (b - a) * t
+    end
+
+    function UILib:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
+        local draw = self._drawings[drawId]
+
+        if drawType == 'rect' then
+            if not draw then
+                self._drawings[drawId] = Drawing.new('Square')
+                return self:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
+            end
+            local rectPosition, rectSize, rectFilled = ...
+            draw.Position = rectPosition
+            draw.Size = rectSize
+            draw.Filled = rectFilled
+        elseif drawType == 'text' then
+            if not draw then
+                self._drawings[drawId] = Drawing.new('Text')
+                return self:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
+            end
+            local textPosition, textContent, textOutline, textAlign, textSize, textFontFace = ...
+            if textAlign == 'center' then
+                draw.Center = true
+                draw.Position = textPosition
+            elseif textAlign == 'right' then
+            else
+                draw.Position = textPosition
+            end
+            draw.Text = textContent
+            draw.Outline = textOutline
+            draw.Font = textFontFace or self._font_face
+            draw.Size = textSize or self._font_size
+        elseif drawType == 'line' then
+            if not draw then
+                self._drawings[drawId] = Drawing.new('Line')
+                return self:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
+            end
+            local lineFrom, lineTo, lineThickness = ...
+            draw.From = lineFrom
+            draw.To = lineTo
+            draw.Thickness = lineThickness or 1
+        elseif drawType == 'triangle' then
+            if not draw then
+                self._drawings[drawId] = Drawing.new('Triangle')
+                return self:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
+            end
+            local triangleFilled, trianglePointA, trianglePointB, trianglePointC = ...
+            draw.Filled = triangleFilled
+            draw.PointA = trianglePointA
+            draw.PointB = trianglePointB
+            draw.PointC = trianglePointC
+        elseif drawType == 'circle' then
+            if not draw then
+                self._drawings[drawId] = Drawing.new('Circle')
+                return self:_Draw(drawId, drawType, drawColor, drawZIndex, ...)
+            end
+            local circlePosition, circleRadius, circleFilled, circleSegments = ...
+            draw.Position = circlePosition
+            draw.Radius = circleRadius
+            draw.Filled = circleFilled
+            draw.NumSides = circleSegments or 30
+        elseif drawType == 'gradient' then
+            local args = {...}
+            if #args == 4 then
+                local firstColor = args[4]
+                local tintColor = self._theming.crust
+                table.insert(args, Color3.new(
+                    self:_Lerp(firstColor.R, tintColor.R, 0.5),
+                    self:_Lerp(firstColor.G, tintColor.G, 0.5),
+                    self:_Lerp(firstColor.B, tintColor.B, 0.5)
+                ))
+            end
+            local gradientDirection = args[1]
+            local gradientOrigin = args[2]
+            local gradientSize = args[3]
+            local numSegments = (#args - 3) - 1
+            local lod = 26
+            for i = 4, #args-1 do
+                local currentColor = args[i]
+                local nextColor = args[i+1]
+                local segmentLengthX = gradientSize.x / numSegments
+                local segmentLengthY = gradientSize.y / numSegments
+                for j = 1, lod do
+                    local t = (j-1) / (lod-1)
+                    local targetColor = Color3.new(
+                        self:_Lerp(currentColor.R, nextColor.R, t),
+                        self:_Lerp(currentColor.G, nextColor.G, t),
+                        self:_Lerp(currentColor.B, nextColor.B, t)
+                    )
+                    local targetAlpha = self:_Lerp(currentColor.A or 1, nextColor.A or 1, t)
+                    local segmentPosition, segmentSize
+                    if gradientDirection == 'horizontal' then
+                        segmentSize = Vector2.new(segmentLengthX / lod, gradientSize.y)
+                        segmentPosition = Vector2.new(
+                            gradientOrigin.x + (i-4) * segmentLengthX + (j-1) * segmentSize.x,
+                            gradientOrigin.y
+                        )
+                    elseif gradientDirection == 'vertical' then
+                        segmentSize = Vector2.new(gradientSize.x, segmentLengthY / lod)
+                        segmentPosition = Vector2.new(
+                            gradientOrigin.x,
+                            gradientOrigin.y + (i-4) * segmentLengthY + (j-1) * segmentSize.y
+                        )
+                    end
+                    local segmentDrawId = drawId .. '_' .. tostring(i) .. '_' .. tostring(j)
+                    self:_Draw(segmentDrawId, 'rect', targetColor, drawZIndex, segmentPosition, segmentSize, true)
+                    self:_SetOpacity(segmentDrawId, targetAlpha)
                 end
-                local origin = state.lockMotionOrigin
-                local angle = os.clock() * (config.lockMoveSpeed / config.lockMoveRange)
-                local offsetX = math.cos(angle) * config.lockMoveRange
-                local offsetZ = math.sin(angle) * config.lockMoveRange
-                root.Position = Vector3.new(origin.X + offsetX, config.lockYValue, origin.Z + offsetZ)
-                local vel = root.AssemblyLinearVelocity
-                if vel then root.AssemblyLinearVelocity = Vector3.new(0, 0, 0) end
-            end)
-            task.wait()
-        end
-    end
-
-    local function startVoidDio()
-        local root = getRootPart()
-        if root then
-            local pos = root.Position
-            state.cachedReturnPosition = Vector3.new(pos.X, pos.Y, pos.Z)
-            state.lockMotionOrigin = Vector3.new(pos.X, config.lockYValue, pos.Z)
-        end
-        setLockYPosition(true)
-        if state.voidDioThread then pcall(task.cancel, state.voidDioThread) end
-        state.voidDioThread = task.spawn(voidDioLoop)
-    end
-
-    local function stopVoidDio()
-        if state.voidDioThread then pcall(task.cancel, state.voidDioThread); state.voidDioThread = nil end
-        local root = getRootPart()
-        local cached = state.cachedReturnPosition
-        if root and cached then
-            pcall(function() root.Position = cached + Vector3.new(0, 10, 0) end)
-        end
-        state.cachedReturnPosition = nil; state.lockMotionOrigin = nil
-        state.lockOffsetX = 0; state.lockOffsetZ = 0; state.lockDirection = 1
-    end
-
-    local function updateFreezeAnimations(enabled)
-        local char = player.Character
-        if not char then return end
-
-        if enabled then
-            local animate = char:FindFirstChild("Animate")
-            if animate then
-                state.savedAnimate    = animate
-                state.savedAnimParent = animate.Parent
-                animate.Parent   = game
             end
-            local humanoid = char:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                local animator = humanoid:FindFirstChildOfClass("Animator")
-                if animator then
-                    state.savedAnimator    = animator
-                    state.savedAnimrParent = animator.Parent
-                    animator.Parent   = game
+            return
+        end
+        draw.Color = drawColor
+        draw.ZIndex = drawZIndex
+        draw.Visible = true
+    end
+
+    function UILib:_RemoveDraw(drawId)
+        local drawObject = self._drawings[drawId]
+        if drawObject then drawObject:Remove() end
+    end
+
+    function UILib:_Undraw(drawId)
+        local drawObject = self._drawings[drawId]
+        if drawObject then drawObject.Visible = false end
+    end
+
+    function UILib:_SetOpacity(drawId, opacity)
+        local drawObject = self._drawings[drawId]
+        if drawObject then drawObject.Transparency = opacity end
+    end
+
+    function UILib:_RemoveDrawStartsWith(drawId)
+        for drawName, _drawObject in pairs(self._drawings) do
+            if drawName:sub(1, #drawId) == drawId then UILib:_RemoveDraw(drawName) end
+        end
+    end
+
+    function UILib:_UndrawStartsWith(drawId)
+        for drawName, _drawObject in pairs(self._drawings) do
+            if drawName:sub(1, #drawId) == drawId then UILib:_Undraw(drawName) end
+        end
+    end
+
+    function UILib:_SetOpacityStartsWith(drawId, opacity)
+        for drawName, _drawObject in pairs(self._drawings) do
+            if drawName:sub(1, #drawId) == drawId then UILib:_SetOpacity(drawName, opacity) end
+        end
+    end
+end
+
+do
+    function UILib:_SpawnColorpicker(position, label, value, callback)
+        self:_RemoveColorpicker()
+        local h, s, v = 0, 0, 0
+        if value then h, s, v = rgbToHsv(value.R, value.G, value.B) end
+        local item = {
+            position = position or Vector2.new(self.x + self.w + self._padding, self.y),
+            label = label, callback = callback,
+            _h = h or 0, _s = s or 0, _v = v or 0, _spawned_at = os.clock()
+        }
+        self._active_colorpicker = item
+    end
+
+    function UILib:_RemoveColorpicker()
+        self._active_colorpicker = nil
+        self:_UndrawStartsWith('colorpicker_')
+    end
+
+    function UILib:_SpawnDropdown(position, width, value, choices, multi, callback, sourceId)
+        self:_RemoveDropdown()
+        local item = {
+            position = position, width = width, value = value,
+            choices = choices, multi = multi, callback = callback, _spawned_at = os.clock(),
+            _source_id = sourceId
+        }
+        self._active_dropdown = item
+    end
+
+    function UILib:_RemoveDropdown()
+        self._active_dropdown = nil
+        self:_UndrawStartsWith('dropdown_')
+    end
+
+    function UILib:_Toggle(tabName, sectionName, label, value, callback, unsafe, tooltip, miniTab)
+        local sectionContent = self._tree[tabName]._items[sectionName]
+        local itemId = #sectionContent._items + 1
+        local item = {
+            type_ = 'toggle', label = label, value = value,
+            callback = callback, unsafe = unsafe or false, tooltip = tooltip,
+            _mini_tab = miniTab,
+        }
+        table.insert(sectionContent._items, item)
+        return {
+            Set = function(_, newValue)
+                self._tree[tabName]._items[sectionName]._items[itemId].value = newValue
+                if self._tree[tabName]._items[sectionName]._items[itemId].callback then
+                    self._tree[tabName]._items[sectionName]._items[itemId].callback(newValue)
                 end
-            end
-        else
-            if state.savedAnimate and state.savedAnimParent then state.savedAnimate.Parent = state.savedAnimParent end
-            if state.savedAnimator and state.savedAnimrParent then state.savedAnimator.Parent = state.savedAnimrParent end
-            state.savedAnimate, state.savedAnimator = nil, nil
-            state.savedAnimParent, state.savedAnimrParent = nil, nil
-        end
-    end
-
-    local function autoAttackLoop()
-        while state.autoAttack and not state.shouldUnload do
-            pcall(mouse1press)
-            task.wait(0.1)
-            pcall(mouse1release)
-            task.wait(0.1)
-        end
-        pcall(mouse1release)
-    end
-
-    local function clickFirstChoice()
-        local ok, choices = pcall(function() return player.PlayerGui.Dialogue.Holder.Choices end)
-        if not ok or not choices then return end
-        local bestBtn, bestY = nil, math.huge
-        for _, btn in ipairs(choices:GetChildren()) do
-            local okP, pos = pcall(function() return btn.AbsolutePosition end)
-            local okS, size = pcall(function() return btn.AbsoluteSize end)
-            if okP and okS and pos.Y < bestY then
-                bestY = pos.Y
-                bestBtn = { x = pos.X + size.X / 2, y = pos.Y + size.Y / 2 }
-            end
-        end
-        if bestBtn then
-            local bx, by = bestBtn.x, bestBtn.y
-            if mousemoveabs then mousemoveabs(bx, by) end
-            task.wait(0.1)
-            if mouse1click then mouse1click() end
-        end
-    end
-
-    local function findMeditateClone()
-        local live = workspace:FindFirstChild("Live")
-        if not live then return nil end
-        local nameLower = player.Name:lower()
-        for _, obj in ipairs(live:GetChildren()) do
-            local objLower = obj.Name:lower()
-            if objLower:find(nameLower, 1, true) and objLower:find("entity clone", 1, true) then return obj end
-        end
-        return nil
-    end
-
-    local function autoMeditateLoop()
-        while state.autoMeditate and not state.shouldUnload do
-            pcall(function()
-                local hrp = getRootPart()
-                if not hrp then return end
-                
-                if state.meditateTarget and not state.meditateTarget.Parent then state.meditateTarget = nil end
-                if not state.meditateTarget then state.meditateTarget = findMeditateClone() end
-                
-                if not state.meditateTarget then
-                    local npcs = workspace:FindFirstChild("Npcs")
-                    local theSelf = npcs and npcs:FindFirstChild("The Self")
-                    if theSelf then
-                        local selfHrp = theSelf:FindFirstChild("HumanoidRootPart") or theSelf.PrimaryPart
-                        if selfHrp then
-                            teleportTo(selfHrp.Position + Vector3.new(0, 3, 0))
-                            task.wait(0.5)
-                            if keypress then keypress(0x45) end
-                            task.wait(0.1)
-                            if keyrelease then keyrelease(0x45) end
-                            task.wait(0.5)
-                            clickFirstChoice()
-                            task.wait(1)
-                            state.meditateTarget = findMeditateClone()
+            end,
+            AddKeybind = function(_, kvalue, mode, canChange, kcallback)
+                local kitem = {
+                    value = kvalue, callback = kcallback, mode = mode or 'Toggle',
+                    canChange = canChange or true, _listening = false, _listening_start = 0
+                }
+                if kvalue and self._inputs[kvalue] then self._inputs[kvalue]._is_bound = true end
+                self._tree[tabName]._items[sectionName]._items[itemId].keybind = kitem
+                return {
+                    Set = function(_, newValue, newMode)
+                        local kmode = newMode or self._tree[tabName]._items[sectionName]._items[itemId].keybind.mode
+                        self._tree[tabName]._items[sectionName]._items[itemId].keybind.value = newValue
+                        self._tree[tabName]._items[sectionName]._items[itemId].keybind.mode = kmode
+                        if newValue and self._inputs[newValue] then self._inputs[newValue]._is_bound = true end
+                        if self._tree[tabName]._items[sectionName]._items[itemId].keybind.callback then
+                            self._tree[tabName]._items[sectionName]._items[itemId].keybind.callback(newValue, kmode)
                         end
                     end
-                else
-                    local cloneHrp = state.meditateTarget:FindFirstChild("HumanoidRootPart")
-                    if cloneHrp then
-                        hrp.Position = cloneHrp.Position + Vector3.new(0, 10, 0)
-                        -- Apply rotation logic if needed, but for now simple height lock
-                    else
-                        state.meditateTarget = nil
-                    end
-                end
-            end)
-            task.wait(0.1)
-        end
-    end
-
-    local function autoPlayLoop()
-        while state.autoPlay and not state.shouldUnload do
-            pcall(function()
-                local pg = player:FindFirstChild("PlayerGui")
-                local mainMenu = pg and pg:FindFirstChild("Main Menu")
-                local buttons = mainMenu and mainMenu:FindFirstChild("Buttons")
-                local playBtn = buttons and buttons:FindFirstChild("Quick Play")
-                
-                if playBtn and playBtn.Visible then
-                    local pos = playBtn.AbsolutePosition
-                    local size = playBtn.AbsoluteSize
-                    local centerX = pos.X + size.X / 2
-                    local centerY = pos.Y + size.Y / 2
-                    if mousemoveabs then mousemoveabs(centerX, centerY) end
-                    task.wait(0.2)
-                    if mouse1click then mouse1click() end
-                    task.wait(5) -- Wait for game to load
-                end
-            end)
-            task.wait(1)
-        end
-    end
-
-    local function autoReplayLoop()
-        while state.autoReplay and not state.shouldUnload do
-            pcall(function()
-                local pg = player:FindFirstChild("PlayerGui")
-                local raidcomplete = pg and pg:FindFirstChild("raidcomplete")
-                local raid = raidcomplete and raidcomplete:FindFirstChild("raid")
-                local retryBtn = raid and raid:FindFirstChild("retry")
-                
-                if retryBtn and retryBtn.Visible then
-                    local pos = retryBtn.AbsolutePosition
-                    local size = retryBtn.AbsoluteSize
-                    local centerX = pos.X + size.X / 2
-                    local centerY = pos.Y + size.Y / 2
-                    if mousemoveabs then mousemoveabs(centerX, centerY) end
-                    task.wait(0.2)
-                    if mouse1click then mouse1click() end
-                    task.wait(2)
-                end
-            end)
-            task.wait(1)
-        end
-    end
-
-    local function autoPvPLoop()
-        while state.autoPvP and not state.shouldUnload do
-            pcall(function()
-                local hrp = getRootPart()
-                if not hrp then return end
-                
-                if state.pvpTarget and not state.pvpTarget.Parent then state.pvpTarget = nil end
-                if not state.pvpTarget then
-                    local live = workspace:FindFirstChild("Live")
-                    if live then
-                        local targetModel = live:FindFirstChild(state.pvpTargetName)
-                        if targetModel and targetModel:IsA("Model") then
-                            state.pvpTarget = targetModel:FindFirstChild("HumanoidRootPart")
+                }
+            end,
+            AddColorpicker = function(_, label, value, overwrite, callback)
+                local item = {
+                    label = label, value = value or self._theming.accent,
+                    overwrite = overwrite, callback = callback
+                }
+                self._tree[tabName]._items[sectionName]._items[itemId].colorpicker = item
+                return {
+                    Set = function(_, newValue)
+                        self._tree[tabName]._items[sectionName]._items[itemId].colorpicker.value = newValue
+                        if self._tree[tabName]._items[sectionName]._items[itemId].colorpicker.callback then
+                            self._tree[tabName]._items[sectionName]._items[itemId].colorpicker.callback(newValue)
                         end
                     end
-                end
-                
-                if state.pvpTarget then
-                    local finalOffset = state.pvpHeightOffset * state.pvpHeightDirection
-                    hrp.Position = state.pvpTarget.Position + Vector3.new(0, finalOffset, 0)
-                    hrp.Velocity = Vector3.new(0, 0, 0)
-                end
-            end)
-            task.wait()
-        end
-    end
-
-
-    local primOffset = 328
-    local rotOffset  = 192
-
-    local function getLookAtMatrix(fromPos, toPos)
-        local dx, dy, dz = toPos.X - fromPos.X, toPos.Y - fromPos.Y, toPos.Z - fromPos.Z
-        local zx, zy, zz = -dx, -dy, -dz
-        local zmag = math.sqrt(zx*zx + zy*zy + zz*zz)
-        if zmag == 0 then return {1, 0, 0, 0, 1, 0, 0, 0, 1} end
-        zx, zy, zz = zx/zmag, zy/zmag, zz/zmag
-        local ux, uy, uz = 0, 1, 0
-        if math.abs(zy) > 0.9999 then ux, uy, uz = 0, 0, 1 end
-        local xx, xy, xz = uy*zz - uz*zy, uz*zx - ux*zz, ux*zy - uy*zx
-        local xmag = math.sqrt(xx*xx + xy*xy + xz*xz)
-        xx, xy, xz = xx/xmag, xy/xmag, xz/xmag
-        local yx, yy, yz = zy*xz - zz*xy, zz*xx - zx*xz, zx*xy - zy*xx
-        return {xx, yx, zx, xy, yy, zy, xz, yz, zz}
-    end
-
-    local function lookAtStep()
-        if not state.npcKillerEnabled then return end
-        local lp = player
-        if not lp or not lp.Character then return end
-        local myHrp = lp.Character:FindFirstChild("HumanoidRootPart")
-        if not myHrp then return end
-        local target = state.raidTarget
-        if not target or not target.Parent then return end
-        local targetPos = target:FindFirstChild("HumanoidRootPart")
-            and target.HumanoidRootPart.Position
-            or resolveWorldPosition(target)
-        if not targetPos then return end
-        
-        local flatTarget = Vector3.new(targetPos.X, myHrp.Position.Y, targetPos.Z)
-        pcall(function() myHrp.CFrame = CFrame.lookAt(myHrp.Position, flatTarget) end)
-
-        local mat  = getLookAtMatrix(myHrp.Position, targetPos)
-        local addr = tonumber(myHrp.Address)
-        if not addr or addr == 0 then return end
-        local prim = memory_read("uintptr_t", addr + primOffset)
-        if not prim or prim == 0 then return end
-        for i = 1, 9 do
-            memory_write("float", prim + rotOffset + ((i - 1) * 4), mat[i])
-        end
-    end
-
-
-    local function getPlayerNames()
-        local names = {}
-        local ok, list = pcall(function() return players:GetPlayers() end)
-        if ok and list then
-            for _, p in ipairs(list) do
-                names[p.Name] = true
+                }
+            end,
+            SetTextColor = function(_, color)
+                self._tree[tabName]._items[sectionName]._items[itemId].text_color = color
             end
-        end
-        return names
+        }
     end
 
-    local function getNPCDisplayName(npc)
-        local dName = npc:GetAttribute("DisplayName")
-        if type(dName) ~= "string" or dName == "" then
-            dName = npc.Name
-            if dName:sub(1, 1) == "." and #dName > 7 then
-                dName = dName:sub(2, -7)
-            end
-        end
-        return dName
-    end
-
-    local function getClosestRaidNPC()
-        local myChar = player.Character
-        if not myChar then return nil end
-        local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-        if not myHRP then return nil end
-        local liveFolder = workspace:FindFirstChild("Live")
-        if not liveFolder then return nil end
-        local myPos = myHRP.Position
-        local closestDist, closestNPC = math.huge, nil
-        local playerNames = getPlayerNames()
-
-        for _, npc in ipairs(liveFolder:GetChildren()) do
-            pcall(function()
-                if playerNames[npc.Name] then return end
-                if npc.Name == "Server" then return end
-                if not npc:IsA("Model") then return end
-                if npc.Name:find("ostage") then return end
-                
-                if state.npcTargetName ~= "Nearest" then
-                    local dName = getNPCDisplayName(npc)
-                    if dName ~= state.npcTargetName then return end
+    function UILib:_Slider(tabName, sectionName, label, value, step, min, max, suffix, callback, miniTab)
+        local sectionContent = self._tree[tabName]._items[sectionName]
+        local itemId = #sectionContent._items + 1
+        local item = {
+            type_ = 'slider', label = label, value = value, step = step,
+            min = min, max = max, suffix = suffix or '', callback = callback,
+            _mini_tab = miniTab,
+        }
+        table.insert(sectionContent._items, item)
+        return {
+            Set = function(_, newValue)
+                self._tree[tabName]._items[sectionName]._items[itemId].value = newValue
+                if self._tree[tabName]._items[sectionName]._items[itemId].callback then
+                    self._tree[tabName]._items[sectionName]._items[itemId].callback(newValue)
                 end
-
-                local humanoid = npc:FindFirstChild("Humanoid")
-                local hrp      = npc:FindFirstChild("HumanoidRootPart")
-                if humanoid and hrp and humanoid.Health > 0 then
-                    local d = distance3D(hrp.Position, myPos)
-                    if d < closestDist then
-                        closestDist = d
-                        closestNPC  = npc
-                    end
-                end
-            end)
-        end
-
-        return closestNPC
+            end,
+            SetTextColor = function(_, color)
+                self._tree[tabName]._items[sectionName]._items[itemId].text_color = color
+            end
+        }
     end
 
-    local function isRaidTargetValid(target)
-        if not target or not target.Parent then return false end
-        local ok, result = pcall(function()
-            local humanoid = target:FindFirstChild("Humanoid")
-            local hrp      = target:FindFirstChild("HumanoidRootPart")
-            if not (humanoid and hrp and humanoid.Health > 0) then return false end
-            
-            if state.npcTargetName ~= "Nearest" then
-                local dName = getNPCDisplayName(target)
-                if dName ~= state.npcTargetName then return false end
+    function UILib:_Dropdown(tabName, sectionName, label, value, choices, multi, callback, miniTab)
+        local sectionContent = self._tree[tabName]._items[sectionName]
+        local itemId = #sectionContent._items + 1
+        local item = {
+            type_ = 'dropdown', label = label, value = value,
+            choices = choices, multi = multi, callback = callback,
+            _mini_tab = miniTab,
+        }
+        table.insert(sectionContent._items, item)
+        return {
+            Set = function(_, newValue)
+                self._tree[tabName]._items[sectionName]._items[itemId].value = newValue
+                if self._tree[tabName]._items[sectionName]._items[itemId].callback then
+                    self._tree[tabName]._items[sectionName]._items[itemId].callback(newValue)
+                end
+            end,
+            UpdateChoices = function(_, newChoices)
+                self._tree[tabName]._items[sectionName]._items[itemId].choices = newChoices
+            end,
+            SetTextColor = function(_, color)
+                self._tree[tabName]._items[sectionName]._items[itemId].text_color = color
             end
-            
-            return true
+        }
+    end
+
+    function UILib:_Button(tabName, sectionName, label, callback, miniTab)
+        local sectionContent = self._tree[tabName]._items[sectionName]
+        local itemId = #sectionContent._items + 1
+        local item = { type_ = 'button', label = label, callback = callback, _mini_tab = miniTab }
+        table.insert(sectionContent._items, item)
+        return {
+            SetTextColor = function(_, color)
+                self._tree[tabName]._items[sectionName]._items[itemId].text_color = color
+            end
+        }
+    end
+
+    function UILib:_Textbox(tabName, sectionName, label, value, callback, miniTab)
+        local sectionContent = self._tree[tabName]._items[sectionName]
+        local itemId = #sectionContent._items + 1
+        local item = {
+            type_ = 'textbox', label = label, value = value,
+            autocomplete = autocomplete or {},
+            callback = callback,
+            _mini_tab = miniTab,
+        }
+        table.insert(sectionContent._items, item)
+        return {
+            Set = function(_, newValue)
+                self._tree[tabName]._items[sectionName]._items[itemId].value = newValue
+                if self._tree[tabName]._items[sectionName]._items[itemId].callback then
+                    self._tree[tabName]._items[sectionName]._items[itemId].callback(newValue)
+                end
+            end,
+            SetTextColor = function(_, color)
+                self._tree[tabName]._items[sectionName]._items[itemId].text_color = color
+            end
+        }
+    end
+
+    function UILib:_Label(tabName, sectionName, text, color, miniTab)
+        local sectionContent = self._tree[tabName]._items[sectionName]
+        local itemId = #sectionContent._items + 1
+        local item = {
+            type_ = 'label', label = text, text_color = color,
+            _mini_tab = miniTab,
+        }
+        table.insert(sectionContent._items, item)
+        return {
+            SetText = function(_, newText)
+                self._tree[tabName]._items[sectionName]._items[itemId].label = newText
+            end,
+            SetTextColor = function(_, newColor)
+                self._tree[tabName]._items[sectionName]._items[itemId].text_color = newColor
+            end
+        }
+    end
+
+    function UILib:_Section(tabName, sectionName)
+        self._tree[tabName]._items[sectionName] = { _items = {} }
+        table.insert(self._tree[tabName]._section_order, sectionName)
+        return {
+            Toggle = function(_, ...) return self:_Toggle(tabName, sectionName, ...) end,
+            Slider = function(_, ...) return self:_Slider(tabName, sectionName, ...) end,
+            Dropdown = function(_, ...) return self:_Dropdown(tabName, sectionName, ...) end,
+            Button = function(_, ...) return self:_Button(tabName, sectionName, ...) end,
+            Textbox = function(_, ...) return self:_Textbox(tabName, sectionName, ...) end,
+            Label = function(_, ...) return self:_Label(tabName, sectionName, ...) end,
+        }
+    end
+
+    function UILib:_TabbedSection(tabName, miniTabNames)
+        local sectionName = table.concat(miniTabNames, '|')
+        self._tree[tabName]._items[sectionName] = {
+            _items = {},
+            _mini_tabs = miniTabNames,
+            _active_mini_tab = miniTabNames[1],
+        }
+        table.insert(self._tree[tabName]._section_order, sectionName)
+        local result = {}
+        for _, mtName in ipairs(miniTabNames) do
+            result[mtName] = {
+                Toggle = function(_, label, value, callback, unsafe, tooltip)
+                    return self:_Toggle(tabName, sectionName, label, value, callback, unsafe, tooltip, mtName)
+                end,
+                Slider = function(_, label, value, step, min, max, suffix, callback)
+                    return self:_Slider(tabName, sectionName, label, value, step, min, max, suffix, callback, mtName)
+                end,
+                Dropdown = function(_, label, value, choices, multi, callback)
+                    return self:_Dropdown(tabName, sectionName, label, value, choices, multi, callback, mtName)
+                end,
+                Button = function(_, label, callback)
+                    return self:_Button(tabName, sectionName, label, callback, mtName)
+                end,
+                Textbox = function(_, label, value, callback)
+                    return self:_Textbox(tabName, sectionName, label, value, callback, mtName)
+                end,
+                Label = function(_, text, color)
+                    return self:_Label(tabName, sectionName, text, color, mtName)
+                end,
+            }
+        end
+        return result
+    end
+
+    function UILib:GetMenuSize() return Vector2.new(self.w, self.h) end
+    function UILib:SetWatermarkEnabled(value) self._watermark_enabled = value end
+    function UILib:SetMenuTitle(newTitle) self.title = newTitle end
+    function UILib:SetWatermarkTitle(newTitle) self._custom_watermark = newTitle end
+    function UILib:SetMenuPosition(newPos) self.x = newPos.x or self.x; self.y = newPos.y or self.y end
+    function UILib:SetMenuSize(newSize) self.w = newSize.x or self.x; self.h = newSize.y or self.y end
+
+    function UILib:CenterMenu()
+        local screenSize = self:_GetScreenSize()
+        local menuSize = self:GetMenuSize()
+        self:SetMenuPosition(Vector2.new(screenSize.x/2 - menuSize.x/2, screenSize.y/2 - menuSize.y/2))
+    end
+
+    function UILib:Notification(text, time)
+        local item = { text = text, time = time, _id = self._notifications_spawned, _spawned_at = os.clock() }
+        table.insert(self._notifications, item)
+        self._notifications_spawned = self._notifications_spawned + 1
+    end
+
+    function UILib:SetTabOrder(order)
+        self._tab_order = order
+    end
+
+    function UILib:Tab(tabName)
+        self._tree[tabName] = { _items = {}, _section_order = {} }
+        table.insert(self._tab_order, tabName)
+        if not self._open_tab then self._open_tab = tabName end
+        return {
+            Section = function(_, sectionName) return self:_Section(tabName, sectionName) end,
+            TabbedSection = function(_, miniTabNames) return self:_TabbedSection(tabName, miniTabNames) end,
+            SetSectionOrder = function(_, order) self._tree[tabName]._section_order = order end,
+        }
+    end
+
+    function UILib:CreateSettingsTab(customName)
+        local settingsTab = self:Tab(customName or 'Menu')
+
+        local menuSection = settingsTab:Section('Menu')
+        local menuKey = menuSection:Toggle('Menu Key', true)
+        menuKey:AddKeybind(self._menu_key, 'Hold', false, function(newValue)
+            self._menu_key = self:_KeyIDToName(newValue)
         end)
-        return ok and result
-    end
+        menuSection:Toggle('Watermark', true, function(newValue)
+            self:SetWatermarkEnabled(newValue)
+        end)
+        menuSection:Toggle('Block Roblox Input', self._block_roblox_input, function(newValue)
+            self._block_roblox_input = newValue
+        end)
 
-    local function getPveQuestType()
-        local pg = player:FindFirstChild("PlayerGui")
-        if not pg then return nil end
-        local notifs = pg:FindFirstChild("Notifications")
-        if not notifs then return nil end
-        local holder = notifs:FindFirstChild("holder")
-        if not holder then return nil end
-
-        for _, child in ipairs(holder:GetChildren()) do
-            if child.Name:match("Deliver") then
-                return "Deliver"
-            elseif child.Name:match("Exterminate") or child.Name:match("Defeat") then
-                return "Exterminate"
+        local themingSection = settingsTab:Section('Theming')
+        local themes = {'Jade', 'Ruby', 'Amethyst', 'Gold', 'Sapphire', 'Obsidian'}
+        local themingTextColor, themingBodyColor, themingAccentColor, themingSubtextColor, themingBorder0Color, themingBorder1Color, themingSurface0Color, themingSurface1Color, themingCrustColor
+        local themingTheme = themingSection:Dropdown('Theme', themes[1], themes, false, function(newValue)
+            if not newValue then return end
+            local theme = newValue[1]
+            if theme == themes[1] then
+                -- jade
+                themingAccentColor:Set(Color3.fromRGB(0, 200, 120))
+                themingBodyColor:Set(Color3.fromRGB(0, 0, 0))
+                themingTextColor:Set(Color3.fromRGB(210, 210, 210))
+                themingSubtextColor:Set(Color3.fromRGB(75, 75, 75))
+                themingBorder1Color:Set(Color3.fromRGB(25, 25, 25))
+                themingBorder0Color:Set(Color3.fromRGB(16, 16, 16))
+                themingSurface1Color:Set(Color3.fromRGB(14, 14, 14))
+                themingSurface0Color:Set(Color3.fromRGB(8, 8, 8))
+                themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
+            elseif theme == themes[2] then
+                -- ruby
+                themingAccentColor:Set(Color3.fromRGB(220, 20, 60))
+                themingBodyColor:Set(Color3.fromRGB(0, 0, 0))
+                themingTextColor:Set(Color3.fromRGB(210, 210, 210))
+                themingSubtextColor:Set(Color3.fromRGB(75, 75, 75))
+                themingBorder1Color:Set(Color3.fromRGB(25, 25, 25))
+                themingBorder0Color:Set(Color3.fromRGB(16, 16, 16))
+                themingSurface1Color:Set(Color3.fromRGB(14, 14, 14))
+                themingSurface0Color:Set(Color3.fromRGB(8, 8, 8))
+                themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
+            elseif theme == themes[3] then
+                -- amethyst
+                themingAccentColor:Set(Color3.fromRGB(153, 102, 204))
+                themingBodyColor:Set(Color3.fromRGB(0, 0, 0))
+                themingTextColor:Set(Color3.fromRGB(210, 210, 210))
+                themingSubtextColor:Set(Color3.fromRGB(75, 75, 75))
+                themingBorder1Color:Set(Color3.fromRGB(25, 25, 25))
+                themingBorder0Color:Set(Color3.fromRGB(16, 16, 16))
+                themingSurface1Color:Set(Color3.fromRGB(14, 14, 14))
+                themingSurface0Color:Set(Color3.fromRGB(8, 8, 8))
+                themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
+            elseif theme == themes[4] then
+                -- gold
+                themingAccentColor:Set(Color3.fromRGB(255, 200, 50))
+                themingBodyColor:Set(Color3.fromRGB(0, 0, 0))
+                themingTextColor:Set(Color3.fromRGB(210, 210, 210))
+                themingSubtextColor:Set(Color3.fromRGB(75, 75, 75))
+                themingBorder1Color:Set(Color3.fromRGB(25, 25, 25))
+                themingBorder0Color:Set(Color3.fromRGB(16, 16, 16))
+                themingSurface1Color:Set(Color3.fromRGB(14, 14, 14))
+                themingSurface0Color:Set(Color3.fromRGB(8, 8, 8))
+                themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
+            elseif theme == themes[5] then
+                -- sapphire
+                themingAccentColor:Set(Color3.fromRGB(15, 82, 186))
+                themingBodyColor:Set(Color3.fromRGB(0, 0, 0))
+                themingTextColor:Set(Color3.fromRGB(210, 210, 210))
+                themingSubtextColor:Set(Color3.fromRGB(75, 75, 75))
+                themingBorder1Color:Set(Color3.fromRGB(25, 25, 25))
+                themingBorder0Color:Set(Color3.fromRGB(16, 16, 16))
+                themingSurface1Color:Set(Color3.fromRGB(14, 14, 14))
+                themingSurface0Color:Set(Color3.fromRGB(8, 8, 8))
+                themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
+            elseif theme == themes[6] then
+                -- obsidian
+                themingAccentColor:Set(Color3.fromRGB(80, 80, 80))
+                themingBodyColor:Set(Color3.fromRGB(0, 0, 0))
+                themingTextColor:Set(Color3.fromRGB(180, 180, 180))
+                themingSubtextColor:Set(Color3.fromRGB(60, 60, 60))
+                themingBorder1Color:Set(Color3.fromRGB(25, 25, 25))
+                themingBorder0Color:Set(Color3.fromRGB(16, 16, 16))
+                themingSurface1Color:Set(Color3.fromRGB(14, 14, 14))
+                themingSurface0Color:Set(Color3.fromRGB(8, 8, 8))
+                themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
             end
-        end
-        return nil
-    end
+        end)
 
-    local function ensureRaidTarget()
-        if state.autoPveQuest and type(state.pveTargets) == "table" then
-            for npc, _ in pairs(state.pveTargets) do
-                if npc.Parent and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
-                    state.raidTarget = npc
-                    return npc
-                else
-                    state.pveTargets[npc] = nil
+        local themingText = themingSection:Toggle('Text color')
+        themingTextColor = themingText:AddColorpicker('Text color', self._theming.text, true, function(newValue) self._theming.text = newValue end)
+        local themingBody = themingSection:Toggle('Body color')
+        themingBodyColor = themingBody:AddColorpicker('Body color', self._theming.body, true, function(newValue) self._theming.body = newValue end)
+        local themingAccent = themingSection:Toggle('Accent color')
+        themingAccentColor = themingAccent:AddColorpicker('Accent color', self._theming.accent, true, function(newValue) self._theming.accent = newValue end)
+        local themingSubtext = themingSection:Toggle('Subtext color')
+        themingSubtextColor = themingSubtext:AddColorpicker('Subtext color', self._theming.subtext, true, function(newValue) self._theming.subtext = newValue end)
+        local themingBorder0 = themingSection:Toggle('Border 0 color')
+        themingBorder0Color = themingBorder0:AddColorpicker('Border 0 color', self._theming.border0, true, function(newValue) self._theming.border0 = newValue end)
+        local themingBorder1 = themingSection:Toggle('Border 1 color')
+        themingBorder1Color = themingBorder1:AddColorpicker('Border 1 color', self._theming.border1, true, function(newValue) self._theming.border1 = newValue end)
+        local themingSurface0 = themingSection:Toggle('Surface 0 color')
+        themingSurface0Color = themingSurface0:AddColorpicker('Surface 0 color', self._theming.surface0, true, function(newValue) self._theming.surface0 = newValue end)
+        local themingSurface1 = themingSection:Toggle('Surface 1 color')
+        themingSurface1Color = themingSurface1:AddColorpicker('Surface 1 color', self._theming.surface1, true, function(newValue) self._theming.surface1 = newValue end)
+        local themingCrust = themingSection:Toggle('Crust color')
+        themingCrustColor = themingCrust:AddColorpicker('Crust color', self._theming.crust, true, function(newValue) self._theming.crust = newValue end)
+
+        themingTheme:Set({'Jade'})
+
+        local configSection = settingsTab:Section('Config')
+        
+        local function GetConfigs()
+            local success, files = pcall(listfiles, "Jade/Configs")
+            local configs = {}
+            if success and type(files) == "table" then
+                for _, file in ipairs(files) do
+                    local name = file:match("([^/\\]+)%.json$")
+                    if name then table.insert(configs, name) end
                 end
             end
-            return nil
+            if #configs == 0 then table.insert(configs, "default") end
+            return configs
         end
 
+        local savedConfigs = GetConfigs()
+        self._config_name = savedConfigs[1]
 
-        if not isRaidTargetValid(state.raidTarget) then
-            state.raidTarget = getClosestRaidNPC()
-        end
-        return state.raidTarget
-    end
-
-
-    local function disableCollisions(char)
-        if not char then return end
-        for _, part in ipairs(char:GetDescendants()) do
-            if part:IsA("BasePart") and part.CanCollide then
-                part.CanCollide = false
+        local configDropdown = configSection:Dropdown('Select Config', {self._config_name}, savedConfigs, false, function(newValue)
+            if newValue and newValue[1] then
+                self._config_name = newValue[1]
             end
-        end
-    end
+        end)
 
-    local function orbitLoop()
-        while state.npcKillerEnabled and state.npcMethod == "Orbit" and not state.shouldUnload do
-            pcall(function()
-                local myChar = player.Character
-                if not myChar then return end
-                local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-                if not myHRP then return end
-                local target = ensureRaidTarget()
-                if not target then return end
-                local targetHRP = target:FindFirstChild("HumanoidRootPart")
-                if not targetHRP then state.raidTarget = nil; return end
-                local targetPos  = targetHRP.Position
-                local orbitAngle = os.clock() * state.orbitSpeed
-                local offsetX    = math.cos(orbitAngle) * state.orbitRadius
-                local offsetZ    = math.sin(orbitAngle) * state.orbitRadius
-                pcall(function()
-                    myHRP.Position = Vector3.new(
-                        targetPos.X + offsetX,
-                        targetPos.Y,
-                        targetPos.Z + offsetZ
-                    )
-                    myHRP.Velocity    = Vector3.new(0, 0, 0)
-                    myHRP.RotVelocity = Vector3.new(0, 0, 0)
-                end)
-                pcall(lookAtStep)
-                pcall(disableCollisions, myChar)
-                pcall(mouse1press)
+        configSection:Button('Load Selected', function()
+            self:LoadConfig(self._config_name)
+        end)
+
+        configSection:Button('Update Selected', function()
+            self:SaveConfig(self._config_name)
+        end)
+
+        configSection:Textbox('New Config Name', '', function(newValue)
+            if newValue ~= '' then self._config_name = newValue end
+        end)
+
+        local _delete_targets = {}
+        local configDeleteDropdown = configSection:Dropdown('Configs to Delete', {}, savedConfigs, true, function(newValue)
+            _delete_targets = newValue or {}
+        end)
+
+        configSection:Button('Save Config', function()
+            self:SaveConfig(self._config_name)
+            local newConfigs = GetConfigs()
+            configDropdown:UpdateChoices(newConfigs)
+            configDropdown:Set({self._config_name})
+            configDeleteDropdown:UpdateChoices(newConfigs)
+        end)
+
+        configSection:Button('Delete Selected', function()
+            if #_delete_targets == 0 then
+                self:Notification("No configs selected", 3)
+                return
+            end
+            local removedCount = 0
+            for _, configName in ipairs(_delete_targets) do
+                local safeName = string.gsub(configName, "[^%w%s]", "")
+                local path = "Jade/Configs/" .. safeName .. ".json"
+                local success, err = pcall(delfile, path)
+                if success then removedCount = removedCount + 1 end
+            end
+            if removedCount > 0 then
+                self:Notification("Deleted " .. tostring(removedCount) .. " config(s)", 3)
+                local newConfigs = GetConfigs()
+                configDropdown:UpdateChoices(newConfigs)
+                configDeleteDropdown:UpdateChoices(newConfigs)
+                if not table.find(newConfigs, self._config_name) then
+                    self._config_name = newConfigs[1]
+                    configDropdown:Set({self._config_name})
+                end
+                configDeleteDropdown:Set({})
+                _delete_targets = {}
+            else
+                self:Notification("Failed to delete", 3)
+            end
+        end)
+
+        configSection:Button('Refresh List', function()
+            local newConfigs = GetConfigs()
+            configDropdown:UpdateChoices(newConfigs)
+            configDeleteDropdown:UpdateChoices(newConfigs)
+            if not table.find(newConfigs, self._config_name) then
+                self._config_name = newConfigs[1]
+                configDropdown:Set({self._config_name})
+            end
+            self:Notification("Config list refreshed", 3)
+        end)
+
+        local ok, autoloadContent = pcall(readfile, "Jade/Configs/autoload.txt")
+        local autoloadStr = (ok and type(autoloadContent) == "string") and autoloadContent or ""
+
+        configSection:Toggle('Auto-Load Selected', autoloadStr == self._config_name and autoloadStr ~= "", function(newValue)
+            pcall(makefolder, "Jade")
+            pcall(makefolder, "Jade/Configs")
+            if newValue then
+                pcall(writefile, "Jade/Configs/autoload.txt", self._config_name)
+                self:Notification("Auto-load set to " .. self._config_name, 3)
+            else
+                pcall(writefile, "Jade/Configs/autoload.txt", "")
+                self:Notification("Auto-load disabled", 3)
+            end
+        end)
+
+        if autoloadStr ~= "" then
+            task.spawn(function()
+                task.wait(1)
+                self:LoadConfig(autoloadStr)
             end)
-            task.wait()
         end
-        pcall(mouse1release)
+
+        return settingsTab, menuSection, themingSection, configSection
     end
 
-    local function underLoop()
-        while state.npcKillerEnabled and state.npcMethod == "Under" and not state.shouldUnload do
-            pcall(function()
-                local myChar = player.Character
-                if not myChar then return end
-                local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-                if not myHRP then return end
-                local target = ensureRaidTarget()
-                if not target then return end
-                local targetHRP = target:FindFirstChild("HumanoidRootPart")
-                if not targetHRP then state.raidTarget = nil; return end
-                local targetPos = targetHRP.Position
-                pcall(function()
-                    myHRP.Position = Vector3.new(
-                        targetPos.X,
-                        targetPos.Y - state.underDepth,
-                        targetPos.Z
-                    )
-                    myHRP.Velocity    = Vector3.new(0, 0, 0)
-                    myHRP.RotVelocity = Vector3.new(0, 0, 0)
-                end)
-                pcall(lookAtStep)
-                pcall(disableCollisions, myChar)
-                pcall(mouse1press)
-            end)
-            task.wait()
-        end
-        pcall(mouse1release)
-    end
-
-    local function backLoop()
-        while state.npcKillerEnabled and state.npcMethod == "Back" and not state.shouldUnload do
-            pcall(function()
-                local myChar = player.Character
-                if not myChar then return end
-                local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-                if not myHRP then return end
-                local target = ensureRaidTarget()
-                if not target then return end
-                local targetHRP = target:FindFirstChild("HumanoidRootPart")
-                if not targetHRP then state.raidTarget = nil; return end
-                local pos = targetHRP.Position
-
-                local lookX, lookZ = 0, -1
-                pcall(function()
-                    local addr = tonumber(targetHRP.Address)
-                    if not addr or addr == 0 then return end
-                    local prim = memory_read("uintptr_t", addr + primOffset)
-                    if not prim or prim == 0 then return end
-                    local zx = memory_read("float", prim + rotOffset + 8)
-                    local zz = memory_read("float", prim + rotOffset + 32)
-                    if zx and zz then
-                        lookX = -zx
-                        lookZ = -zz
+    function UILib:GetConfigData()
+        local data = {}
+        for tabName, tabContent in pairs(self._tree) do
+            data[tabName] = {}
+            for _, sectionName in ipairs(tabContent._section_order) do
+                local sectionContent = tabContent._items[sectionName]
+                data[tabName][sectionName] = {}
+                for _, item in ipairs(sectionContent._items) do
+                    if item.type_ == 'toggle' then
+                        data[tabName][sectionName][item.label] = { 
+                            value = item.value, 
+                            keybind = item.keybind and item.keybind.value, 
+                            colorpicker = item.colorpicker and { R = item.colorpicker.value.R, G = item.colorpicker.value.G, B = item.colorpicker.value.B } 
+                        }
+                    elseif item.type_ == 'slider' or item.type_ == 'dropdown' or item.type_ == 'textbox' then
+                        data[tabName][sectionName][item.label] = item.value
                     end
-                end)
-
-                pcall(function()
-                    myHRP.Position = Vector3.new(
-                        pos.X - lookX * state.backDistance,
-                        pos.Y,
-                        pos.Z - lookZ * state.backDistance
-                    )
-                    myHRP.Velocity    = Vector3.new(0, 0, 0)
-                    myHRP.RotVelocity = Vector3.new(0, 0, 0)
-                end)
-                pcall(lookAtStep)
-                pcall(disableCollisions, myChar)
-                pcall(mouse1press)
-            end)
-            task.wait()
-        end
-        pcall(mouse1release)
-    end
-
-    local function topLoop()
-        while state.npcKillerEnabled and state.npcMethod == "Top" and not state.shouldUnload do
-            pcall(function()
-                local myChar = player.Character
-                if not myChar then return end
-                local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-                if not myHRP then return end
-                local target = ensureRaidTarget()
-                if not target then return end
-                local targetHRP = target:FindFirstChild("HumanoidRootPart")
-                if not targetHRP then state.raidTarget = nil; return end
-                local targetPos = targetHRP.Position
-                pcall(function()
-                    myHRP.Position = Vector3.new(
-                        targetPos.X,
-                        targetPos.Y + state.topHeight,
-                        targetPos.Z
-                    )
-                    myHRP.Velocity    = Vector3.new(0, 0, 0)
-                    myHRP.RotVelocity = Vector3.new(0, 0, 0)
-                end)
-                pcall(lookAtStep)
-                pcall(disableCollisions, myChar)
-                pcall(mouse1press)
-            end)
-            task.wait()
-        end
-        pcall(mouse1release)
-    end
-
-    local function startOrbit()  if state.orbitThread then task.cancel(state.orbitThread) end; state.raidTarget = nil; state.orbitThread = task.spawn(orbitLoop) end
-    local function stopOrbit()   if state.orbitThread then task.cancel(state.orbitThread); state.orbitThread = nil end; pcall(mouse1release) end
-    local function startUnder()  if state.underThread then task.cancel(state.underThread) end; state.raidTarget = nil; state.underThread = task.spawn(underLoop) end
-    local function stopUnder()   if state.underThread then task.cancel(state.underThread); state.underThread = nil end; pcall(mouse1release) end
-    local function startBack()   if state.backThread then task.cancel(state.backThread) end; state.raidTarget = nil; state.backThread = task.spawn(backLoop) end
-    local function stopBack()    if state.backThread then task.cancel(state.backThread); state.backThread = nil end; pcall(mouse1release) end
-    local function startTop()    if state.topThread then task.cancel(state.topThread) end; state.raidTarget = nil; state.topThread = task.spawn(topLoop) end
-    local function stopTop()     if state.topThread then task.cancel(state.topThread); state.topThread = nil end; pcall(mouse1release) end
-
-    local function stopAllNpcKillerLoops() stopOrbit(); stopUnder(); stopBack(); stopTop() end
-
-    local function startNpcKillerForCurrentMethod()
-        stopAllNpcKillerLoops()
-        if not state.npcKillerEnabled then return end
-        if state.npcMethod == "Orbit" then startOrbit()
-        elseif state.npcMethod == "Back" then startBack()
-        elseif state.npcMethod == "Top" then startTop()
-        else startUnder() end
-    end
-
-
-    local function autoSummonStandLoop()
-        while state.autoSummonStand and not state.shouldUnload do
-            pcall(function()
-                local liveFolder = workspace:FindFirstChild("Live")
-                if not liveFolder then return end
-                local charModel = liveFolder:FindFirstChild(player.Name)
-                if not charModel then return end
-                local val = charModel:GetAttribute("SummonedStand") or ""
-                if type(val) ~= "string" then val = tostring(val) end
-
-                if #val < 2 then
-                    if keypress then pcall(keypress, 0x09) end
-                    task.wait(0.1)
-                    if keyrelease then pcall(keyrelease, 0x09) end
                 end
-            end)
-            task.wait()
+            end
         end
-        if keyrelease then pcall(keyrelease, 0x09) end
+        return data
     end
 
-    local function startAutoSummonStand()
-        if state.autoSummonThread then pcall(task.cancel, state.autoSummonThread); state.autoSummonThread = nil end
-        state.autoSummonThread = task.spawn(autoSummonStandLoop)
+    function UILib:SaveConfig(filename)
+        local success, err = pcall(function()
+            local HttpService = game:GetService("HttpService")
+            local data = self:GetConfigData()
+            local json = HttpService:JSONEncode(data)
+
+            pcall(makefolder, "Jade")
+            pcall(makefolder, "Jade/Configs")
+
+            local safeName = string.gsub(filename, "[^%w%s]", "")
+            local path = "Jade/Configs/" .. safeName .. ".json"
+
+            writefile(path, json)
+            return path
+        end)
+
+        if success then
+            self:Notification("Saved config successfully", 3)
+        else
+            self:Notification("Failed to save config", 3)
+        end
     end
 
-    local function stopAutoSummonStand()
-        if state.autoSummonThread then pcall(task.cancel, state.autoSummonThread); state.autoSummonThread = nil end
-        if keyrelease then pcall(keyrelease, 0x09) end
-    end
+    function UILib:LoadConfig(filename)
+        local safeName = string.gsub(filename, "[^%w%s]", "")
+        local path = "Jade/Configs/" .. safeName .. ".json"
+        
+        local ok, content = pcall(readfile, path)
+        if not ok or type(content) ~= "string" or content == "" then 
+            self:Notification("Config not found", 3)
+            return false
+        end
 
-    local HttpService = game:GetService("HttpService")
+        local decodeSuccess, data = pcall(function()
+            return game:GetService("HttpService"):JSONDecode(content)
+        end)
 
-    local function getStandData()
-        local pd = player:FindFirstChild("PlayerData")
-        if pd then
-            local sd = pd:FindFirstChild("SlotData")
-            if sd then
-                local standVal = sd:FindFirstChild("Stand")
-                if standVal and standVal:IsA("StringValue") then
-                    local str = standVal.Value
-                    if str and str ~= "" and str ~= "None" then
-                        local success, decoded = pcall(function() return HttpService:JSONDecode(str) end)
-                        if success and type(decoded) == "table" then
-                            return decoded
+        if not decodeSuccess or type(data) ~= "table" then
+            self:Notification("Failed to parse config", 3)
+            return false
+        end
+
+        for tabName, tabData in pairs(data) do
+            if type(tabData) == "table" and self._tree[tabName] then
+                for sectionName, secData in pairs(tabData) do
+                    if type(secData) == "table" and self._tree[tabName]._items[sectionName] then
+                        for _, item in ipairs(self._tree[tabName]._items[sectionName]._items) do
+                            local val = secData[item.label]
+                            if val ~= nil then
+                                pcall(function()
+                                    if item.type_ == 'toggle' and type(val) == 'table' then
+                                        if val.value ~= nil then item.value = val.value end
+                                        if val.keybind ~= nil and item.keybind then item.keybind.value = val.keybind end
+                                        if val.colorpicker ~= nil and val.colorpicker.R and val.colorpicker.G and val.colorpicker.B and item.colorpicker then
+                                            item.colorpicker.value = Color3.new(val.colorpicker.R, val.colorpicker.G, val.colorpicker.B)
+                                            if item.colorpicker.callback then item.colorpicker.callback(item.colorpicker.value) end
+                                        end
+                                        if item.callback then item.callback(item.value) end
+                                    elseif (item.type_ == 'slider' or item.type_ == 'dropdown' or item.type_ == 'textbox') then
+                                        item.value = val
+                                        if item.callback then item.callback(item.value) end
+                                    end
+                                end)
+                            end
                         end
                     end
                 end
             end
         end
-        return nil
-    end
 
-    local function updateStandLabel()
-        if not _G.currentStandLabel1 or not _G.currentStandLabel2 or not _G.currentStandLabel3 or not _G.currentStandLabel4 or not _G.currentStandLabel5 or not _G.currentStandLabel6 then return end
-        local sd = getStandData()
-        local grades = { [1] = "D", [2] = "C", [3] = "B", [4] = "A", [5] = "S" }
-        local function getGrade(val) return grades[tonumber(val)] or tostring(val or 0) end
-
-        if sd and sd.Name then
-            _G.currentStandLabel1:SetText(string.format("Stand: %s", tostring(sd.Name)))
-            _G.currentStandLabel2:SetText(string.format("Trait: %s", tostring(sd.Trait or "None")))
-            _G.currentStandLabel3:SetText(string.format("Speed: %s", getGrade(sd.Speed)))
-            _G.currentStandLabel4:SetText(string.format("Spec: %s", getGrade(sd.Specialty)))
-            _G.currentStandLabel5:SetText(string.format("Str: %s", getGrade(sd.Strength)))
-            _G.currentStandLabel6:SetText(string.format("Skin: %s", tostring(sd.Skin or "None")))
-        else
-            _G.currentStandLabel1:SetText("Stand: None")
-            _G.currentStandLabel2:SetText("Trait: None")
-            _G.currentStandLabel3:SetText("Speed: 0")
-            _G.currentStandLabel4:SetText("Spec: 0")
-            _G.currentStandLabel5:SetText("Str: 0")
-            _G.currentStandLabel6:SetText("Skin: None")
-        end
-    end
-
-    local function useStandArrow()
-        if keypress then pcall(keypress, 0xC0) end
-        task.wait(0.05)
-        if keyrelease then pcall(keyrelease, 0xC0) end
-
-        task.wait(3)
-
-        local gui = player:FindFirstChild("PlayerGui")
-        if not gui then return false end
-        local inv = gui:FindFirstChild("Inventory")
-        if not inv then return false end
-        local cg = inv:FindFirstChild("CanvasGroup")
-        if not cg then return false end
-        local bf = cg:FindFirstChild("backpack_frame")
-        if not bf then return false end
-        local searchBox = bf:FindFirstChild("search")
-        if not searchBox then return false end
-
-        local function findUseButtonInInfo()
-            local infoFrame = cg:FindFirstChild("info_frame")
-            if not infoFrame then return nil end
-            local targetLower = "use"
-
-            for _, inst in ipairs(infoFrame:GetDescendants()) do
-                local nameLower = string.lower(tostring(inst.Name))
-                if string.find(nameLower, targetLower, 1, true)
-                    and not string.find(nameLower, "use all", 1, true) then
-                    return inst
-                end
-
-                if inst:IsA("TextButton") or inst:IsA("TextLabel") then
-                    local textLower = string.lower(tostring(inst.Text or ""))
-                    if string.find(textLower, targetLower, 1, true)
-                        and not string.find(textLower, "use all", 1, true) then
-                        return inst
-                    end
-                end
-            end
-        end
-
-        local function findConfirmUseButton()
-            local textMatch = "are you sure you want to use this item?"
-            local itemMatch = "stand arrow"
-            local useMatch  = "use"
-
-            local dialogFrame = nil
-
-            for _, inst in ipairs(gui:GetDescendants()) do
-                if inst:IsA("TextLabel") or inst:IsA("TextBox") then
-                    local textLower = string.lower(tostring(inst.Text or ""))
-                    if string.find(textLower, textMatch, 1, true)
-                        and string.find(textLower, itemMatch, 1, true) then
-                        dialogFrame = inst.Parent
-                        break
-                    end
-                end
-            end
-            if not dialogFrame then return nil end
-
-            for _, inst in ipairs(dialogFrame:GetDescendants()) do
-                if inst:IsA("TextButton") then
-                    local nameLower = string.lower(tostring(inst.Name))
-                    local textLower = string.lower(tostring(inst.Text or ""))
-
-                    if (string.find(nameLower, useMatch, 1, true)
-                        or string.find(textLower, useMatch, 1, true))
-                        and not string.find(textLower, "cancel", 1, true) then
-                        return inst
-                    end
-                end
-            end
-            return nil
-        end
-
-        local absPos  = searchBox.AbsolutePosition
-        local absSize = searchBox.AbsoluteSize
-        local centerX = absPos.X + absSize.X/2
-        local centerY = absPos.Y + absSize.Y/2 + 20
-
-        if not isrbxactive or not isrbxactive() then return false end
-        if setrobloxinput then setrobloxinput(true) end
-
-        if mousemoveabs then mousemoveabs(centerX, centerY) end
-        task.wait(0.3)
-        if mousemoverel then mousemoverel(0, 2) end
-        task.wait(0.3)
-        if mouse1click then mouse1click() end
-        task.wait(0.4)
-
-        if setclipboard then setclipboard("stand arrow") end
-        task.wait(0.1)
-        if keypress then pcall(keypress, 0x11) pcall(keypress, 0x56) end
-        task.wait(0.05)
-        if keyrelease then pcall(keyrelease, 0x56) pcall(keyrelease, 0x11) end
-        task.wait(0.4)
-
-        local slotDownOffset  = 40
-        local slotLeftOffset  = -35
-
-        if mousemoverel then mousemoverel(0, slotDownOffset) end
-        task.wait(0.1)
-        if mousemoverel then mousemoverel(slotLeftOffset, 0) end
-        task.wait(0.5)
-        if mouse1click then mouse1click() end
-        task.wait(0.5)
-
-        local useButton = findUseButtonInInfo()
-        if useButton then
-            local uPos  = useButton.AbsolutePosition
-            local uSize = useButton.AbsoluteSize
-            local useX = uPos.X + uSize.X/2
-            local useY = uPos.Y + uSize.Y/2 + 20
-            if mousemoveabs then mousemoveabs(useX, useY) end
-            task.wait(0.3)
-            if mousemoverel then mousemoverel(0, 2) end
-            task.wait(0.3)
-            if mouse1click then mouse1click() end
-        end
-
-        task.wait(0.5)
-
-        local confirmUseButton = findConfirmUseButton()
-        if confirmUseButton then
-            local cPos  = confirmUseButton.AbsolutePosition
-            local cSize = confirmUseButton.AbsoluteSize
-            local cX = cPos.X + cSize.X/2
-            local cY = cPos.Y + cSize.Y/2 + 20
-            if mousemoveabs then mousemoveabs(cX, cY) end
-            task.wait(0.3)
-            if mousemoverel then mousemoverel(0, 2) end
-            task.wait(0.3)
-            if mouse1click then mouse1click() end
-        end
-        
+        self:Notification("Config loaded", 3)
         return true
     end
 
-    local function autoStandRollLoop()
-        while state.autoStandRoll and not state.shouldUnload do
-            local oldStandData = getStandData()
-            local oldStandName = oldStandData and oldStandData.Name or "None"
-            
-            local used = useStandArrow()
-            if not used then
-                task.wait(2)
-                continue
-            end
-
-            local startWait = os.clock()
-            local newStandData = nil
-            while (os.clock() - startWait < 15) and state.autoStandRoll do
-                newStandData = getStandData()
-                local newName = newStandData and newStandData.Name or "None"
-                if newName ~= oldStandName then
-                    break
-                end
-                task.wait(0.5)
-            end
-            
-            if not state.autoStandRoll then break end
-            
-            if newStandData then
-                local newName = newStandData.Name
-                pcall(updateStandLabel)
-                local hasSkin = newStandData.Skin and newStandData.Skin ~= "" and newStandData.Skin ~= "None"
-                if newName == state.targetStandRoll or (state.stopOnAnySkin and hasSkin) then
-                    state.autoStandRoll = false
-                    if _G.autoStandRollToggle then
-                        pcall(function() _G.autoStandRollToggle:SetValue(false) end)
-                    end
-                    break
-                end
-            end
-            task.wait(2)
-        end
+    function UILib:RegisterActivity(activity)
+        local activityId = #self._activities + 1
+        self._activities[activityId] = activity
+        return {
+            Remove = function(_) self._activities[activityId] = nil end
+        }
     end
 
-    local function startAutoStandRoll()
-        if state.standRollThread then pcall(task.cancel, state.standRollThread); state.standRollThread = nil end
-        state.standRollThread = task.spawn(autoStandRollLoop)
+    function UILib:Unload()
+        self:_RemoveDrawStartsWith('')
+        setrobloxinput(true)
     end
 
-    local function stopAutoStandRoll()
-        if state.standRollThread then pcall(task.cancel, state.standRollThread); state.standRollThread = nil end
-    end
+    function UILib:Step()
+        local menuTitle = self.title
+        local hoveredTooltip = nil
+        local windowActive = isrbxactive()
 
+        setrobloxinput(not self._menu_open or not self._block_roblox_input)
 
-
-    local function refreshItemCache()
-        local now = os.clock()
-        if now - state.itemCacheLastRefresh < state.itemCacheRefreshInterval then return end
-        state.itemCacheLastRefresh = now
-        state.itemCache = {}
-        local seenThisScan = {}
-
-        local ok, children = pcall(function() return workspace:GetChildren() end)
-        if not ok or not children then return end
-
-        for _, child in ipairs(children) do
-            if child.Name == "Model" then
-                local ok2, descs = pcall(function() return child:GetDescendants() end)
-                if ok2 and descs then
-                    for _, obj in ipairs(descs) do
-                        if trackedItemLookup[obj.Name] then
-                            local key = getItemAddressKey(obj)
-                            if not seenThisScan[key] then
-                                seenThisScan[key] = true
-                                table.insert(state.itemCache, obj)
-                                state.seenItemAddresses[key] = now
-                                if #state.itemCache >= config.maxTrackedItems then break end
-                            end
-                        end
-                    end
+        for keycode, inputData in pairs(self._inputs) do
+            local interacted = iskeypressed(inputData.id)
+            if windowActive and interacted and isrbxactive() then
+                if inputData.held == false and inputData.click == false then
+                    inputData.click = true
+                else
+                    inputData.click = false
                 end
-            end
-            if #state.itemCache >= config.maxTrackedItems then break end
-        end
-
-        for key, lastSeen in pairs(state.seenItemAddresses) do
-            if now - lastSeen > config.addressRetentionSeconds then
-                state.seenItemAddresses[key] = nil
+                inputData.held = true
+            else
+                inputData.click = false
+                inputData.held = false
             end
         end
 
-        state.itemScanInitialized = true
-    end
+        local clickFrame = self:_IsKeyPressed('m1')
+        local mouseHeld = self:_IsKeyHeld('m1')
+        local ctxFrame = self:_IsKeyPressed('m2')
+        local menuKeyPressed = self:_IsKeyPressed(self._menu_key or 'f1')
 
-    local function findTargetItem()
-        local root = getRootPart()
-        local rootPos = root and root.Position
-        local bestInst, bestPos, bestDist = nil, nil, math.huge
-
-        for _, obj in ipairs(state.itemCache) do
-            if obj.Parent and state.collectTargetNames[obj.Name] then
-                local ok, worldPos = pcall(resolveWorldPosition, obj)
-                if ok and worldPos then
-                    local d = rootPos and distance3D(worldPos, rootPos) or 0
-                    if d < bestDist then
-                        bestDist = d
-                        bestInst = obj
-                        bestPos  = worldPos
-                    end
-                end
-            end
+        if menuKeyPressed then
+            self._menu_open = not self._menu_open
+            self._menu_toggled_at = os.clock()
         end
 
-        return bestInst, bestPos
-    end
-
-    local function autoCollectLoop()
-        state.itemCacheLastRefresh = 0
-        refreshItemCache()
-
-        local searchStart = os.clock()
-        local hasPosed = false
-
-        while state.autoCollect and not state.shouldUnload do
-            refreshItemCache()
-
-            local target, targetPos = findTargetItem()
-
-            if not target or not targetPos then
-                if os.clock() - searchStart >= 1.5 then
-                    if state.collectSafeSpot then
-                        teleportTo(config.safeSpot)
-                        if state.poseInSafespot and not hasPosed then
-                            hasPosed = true
-                            local liveFolder = workspace:FindFirstChild("Live")
-                            if liveFolder then
-                                local charModel = liveFolder:FindFirstChild(player.Name)
-                                if charModel then
-                                    local val = charModel:GetAttribute("SummonedStand") or ""
-                                    if type(val) ~= "string" then val = tostring(val) end
-                                    if #val < 2 then
-                                        if keypress then pcall(keypress, 0x09) end
-                                        task.wait(0.1)
-                                        if keyrelease then pcall(keyrelease, 0x09) end
-                                        task.wait(0.5)
-                                    end
-                                    if keypress then pcall(keypress, 0x50) end
-                                    task.wait(0.1)
-                                    if keyrelease then pcall(keyrelease, 0x50) end
+        for _, tabContent in pairs(self._tree) do
+            for _, sectionContent in pairs(tabContent._items) do
+                for _, sectionItem in ipairs(sectionContent._items) do
+                    local kb = sectionItem.keybind
+                    if kb and not kb._listening and kb.value then
+                        local boundKey = self._inputs[kb.value]
+                        if boundKey then
+                            if kb.mode == 'Toggle' then
+                                if boundKey.click then
+                                    sectionItem.value = not sectionItem.value
+                                    if sectionItem.callback then sectionItem.callback(sectionItem.value) end
+                                end
+                            elseif kb.mode == 'Hold' then
+                                if boundKey.held and not sectionItem.value then
+                                    sectionItem.value = true
+                                    if sectionItem.callback then sectionItem.callback(true) end
+                                elseif not boundKey.held and sectionItem.value then
+                                    sectionItem.value = false
+                                    if sectionItem.callback then sectionItem.callback(false) end
+                                end
+                            elseif kb.mode == 'Always' then
+                                if not sectionItem.value then
+                                    sectionItem.value = true
+                                    if sectionItem.callback then sectionItem.callback(true) end
                                 end
                             end
                         end
                     end
-                    task.wait(0.5)
-                else
-                    task.wait(0.1)
                 end
+            end
+        end
+
+        local watermarkPos = Vector2.new(20, 20)
+        local watermarkContent = self._custom_watermark or self.title
+        local watermarkStates = {watermarkContent}
+        for _, activity in ipairs(self._activities) do
+            if type(activity) == 'function' then
+                local res = activity()
+                if type(res) ~= 'nil' then table.insert(watermarkStates, tostring(res)) end
+            end
+        end
+        watermarkContent = table.concat(watermarkStates, ' | ')
+        local watermarkSize = self:_GetTextBounds(watermarkContent) + Vector2.new(self._padding * 2, self._padding * 2)
+        if self._watermark_enabled then
+            self:_Draw('watermark_crust', 'rect', self._theming.crust, 102, watermarkPos, watermarkSize, false)
+            self:_Draw('watermark_border', 'rect', self._theming.border0, 102, watermarkPos + Vector2.new(1, 1), watermarkSize - Vector2.new(2, 2), false)
+            self:_Draw('watermark_accent', 'line', self._theming.accent, 103, watermarkPos + Vector2.new(2, 2), watermarkPos + Vector2.new(watermarkSize.x - 2, 2))
+            self:_Draw('watermark_body', 'gradient', nil, 101, 'vertical', watermarkPos + Vector2.new(2, 2), watermarkSize - Vector2.new(4, 4), self._theming.surface0)
+            self:_Draw('watermark_text', 'text', self._theming.text, 103, watermarkPos + Vector2.new(self._padding, self._padding + 2), watermarkContent, true)
+        else
+            self:_UndrawStartsWith('watermark_')
+        end
+
+        local notificationsOrigin = watermarkPos + (self._watermark_enabled and Vector2.new(0, watermarkSize.y + self._padding) or Vector2.new(0, 0))
+        local totalNotificationsHeight = 0
+        for notificationIter, notification in ipairs(self._notifications) do
+            local shouldFade = os.clock() > notification._spawned_at + notification.time
+            local notificationText = notification.text
+            local notificationTextSize = self:_GetTextBounds(notificationText)
+            local t = math.max(0, math.min(notification._spawned_at - os.clock() + (shouldFade and notification.time + 1 or 1), 1))
+            local notificationFade = math.abs((shouldFade and 0 or 1) - (t * t * (3 - 2 * t)))
+            local notificationDrawId = 'notification_' .. notification._id
+            self:_SetOpacityStartsWith(notificationDrawId, notificationFade)
+
+            local notificationSize = Vector2.new(notificationTextSize.x + self._padding * 2, notificationTextSize.y + self._padding * 2)
+            local notificationOrigin = notificationsOrigin + Vector2.new((-notificationSize.x - 50) * (1 - notificationFade), totalNotificationsHeight)
+            local progressPercent = math.min((os.clock() - notification._spawned_at)/notification.time, 1)
+            self:_Draw(notificationDrawId .. '_crust', 'rect', self._theming.crust, 102, notificationOrigin, notificationSize, false)
+            self:_Draw(notificationDrawId .. '_border', 'rect', self._theming.border0, 102, notificationOrigin + Vector2.new(1, 1), notificationSize - Vector2.new(2, 2), false)
+            self:_Draw(notificationDrawId .. '_progress', 'gradient', nil, 103, 'horizontal', notificationOrigin + Vector2.new(2, notificationSize.y - 4), Vector2.new(notificationSize.x * progressPercent - 6, 2), {R=0, G=0, B=0, A=0}, self._theming.accent)
+            self:_Draw(notificationDrawId .. '_body', 'gradient', nil, 101, 'vertical', notificationOrigin + Vector2.new(2, 2), notificationSize - Vector2.new(4, 4), self._theming.surface0)
+            self:_Draw(notificationDrawId .. '_text', 'text', self._theming.text, 103, notificationOrigin + Vector2.new(self._padding, self._padding + 2), notificationText, true)
+            totalNotificationsHeight = totalNotificationsHeight + (notificationTextSize.y + self._padding * 3) * notificationFade
+            if os.clock() - 1 > notification._spawned_at + notification.time then
+                self:_RemoveDrawStartsWith(notificationDrawId)
+                table.remove(self._notifications, notificationIter)
+            end
+        end
+
+        if self._menu_open then
+            if mouseHeld and self._menu_drag then
+                local mousePos = self:_GetMousePos()
+                self.x = mousePos.x - self._menu_drag.x
+                self.y = mousePos.y - self._menu_drag.y
             else
-                searchStart = os.clock()
-
-                local yOffset = state.stealthCollect and -5 or 5
-                local pickupPos = Vector3.new(targetPos.X, targetPos.Y + yOffset, targetPos.Z)
-                teleportTo(pickupPos)
-                task.wait(0.1)
-
-                if keypress then pcall(keypress, 0x45) end
-
-                for _ = 1, 30 do
-                    task.wait(0.1)
-                    if not target.Parent then break end
-                end
-
-                if keyrelease then pcall(keyrelease, 0x45) end
-
-                state.itemCacheLastRefresh = 0
-                refreshItemCache()
+                self._menu_drag = nil
             end
-        end
 
-        if keyrelease then pcall(keyrelease, 0x45) end
-    end
-
-    local function startAutoCollect()
-        if state.collectThread then task.cancel(state.collectThread); state.collectThread = nil end
-        state.collectThread = task.spawn(autoCollectLoop)
-    end
-
-    local function stopAutoCollect()
-        if state.collectThread then task.cancel(state.collectThread); state.collectThread = nil end
-        if keyrelease then pcall(keyrelease, 0x45) end
-    end
-
-
-
-    local function getOrCreateItemBundle(instance)
-        if itemDrawings[instance] then return itemDrawings[instance] end
-
-        local box = Drawing.new("Square")
-        box.Filled = false; box.Thickness = 2; box.Visible = false; box.ZIndex = 2
-
-        local nameText = Drawing.new("Text")
-        nameText.Center = true; nameText.Outline = true
-        nameText.Font = Drawing.Fonts.SystemBold
-        nameText.Size = 14; nameText.Visible = false; nameText.ZIndex = 3
-
-        local distText = Drawing.new("Text")
-        distText.Center = true; distText.Outline = true
-        distText.Font = Drawing.Fonts.System
-        distText.Size = 12; distText.Visible = false; distText.ZIndex = 3
-
-        local tracer = Drawing.new("Line")
-        tracer.Thickness = 1; tracer.Visible = false; tracer.ZIndex = 1
-
-        local bundle = { box = box, nameText = nameText, distText = distText, tracer = tracer }
-        itemDrawings[instance] = bundle
-        return bundle
-    end
-
-
-    local function hideAllItemDrawings()
-        for _, b in pairs(itemDrawings) do
-            b.box.Visible = false; b.nameText.Visible = false
-            b.distText.Visible = false; b.tracer.Visible = false
-        end
-    end
-
-    local function removeAllItemDrawings()
-        for k, b in pairs(itemDrawings) do
-            b.box:Remove(); b.nameText:Remove(); b.distText:Remove(); b.tracer:Remove()
-            itemDrawings[k] = nil
-        end
-    end
-
-
-
-
-    local function renderItemESP()
-        if not state.itemESP then hideAllItemDrawings(); return end
-
-        local camPos
-        local screenCX, screenBY = 400, 600
-        do
-            local ok, cam = pcall(function() return workspace.CurrentCamera end)
-            if ok and cam then
-                local okP, p = pcall(function() return cam.Position end)
-                if okP then camPos = p end
-                local okV, vp = pcall(function() return cam.ViewportSize end)
-                if okV and vp then
-                    screenCX = math.floor(vp.x * 0.5)
-                    screenBY = vp.y
-                end
-            end
-        end
-
-        local root    = getRootPart()
-        local rootPos = root and root.Position
-        local seenThisFrame = {}
-        local rendered = 0
-
-        for _, obj in ipairs(state.itemCache) do
-            if rendered >= state.maxRenderedItems then break end
-            if obj.Parent then
-                local okP, wpos = pcall(resolveWorldPosition, obj)
-                if okP and wpos then
-                    local okW, spos, onScreen = pcall(WorldToScreen, wpos)
-                    if okW and onScreen and spos then
-                        local bundle = getOrCreateItemBundle(obj)
-                        seenThisFrame[obj] = true
-                        rendered = rendered + 1
-
-                        local color = state.itemColors[obj.Name] or Color3.fromRGB(255, 255, 255)
-
-                        local dist = camPos and distance3D(camPos, wpos) or 80
-                        local h = math.max(12, math.min(80, 1200 / math.max(dist, 1)))
-                        local w = h * 0.75
-
-                        bundle.box.Color = color
-                        bundle.box.Thickness = 2
-                        bundle.box.Size = Vector2.new(w, h)
-                        bundle.box.Position = Vector2.new(spos.X - w * 0.5, spos.Y - h * 0.5)
-                        bundle.box.Visible = state.espShowBox
-
-                        bundle.nameText.Text = obj.Name
-                        bundle.nameText.Color = color
-                        bundle.nameText.Position = Vector2.new(spos.X, spos.Y - h * 0.5 - 14)
-                        bundle.nameText.Visible = state.espShowName
-
-                        if rootPos then
-                            local d = math.floor(distance3D(wpos, rootPos))
-                            bundle.distText.Text = d .. " studs"
-                            bundle.distText.Color = color
-                            bundle.distText.Position = Vector2.new(spos.X, spos.Y + h * 0.5 + 2)
-                            bundle.distText.Visible = state.espShowDistance
+            local dropdown = self._active_dropdown
+            if dropdown then
+                local dropdownFade = 1 - (dropdown._spawned_at - (os.clock() - 0.25)) / 0.25
+                if dropdownFade < 1.1 then self:_SetOpacityStartsWith('dropdown_', clamp(dropdownFade, 0, 1)) end
+                local shouldCancel = true
+                local dropdownOrigin = dropdown.position
+                local totalHeight = self._padding
+                for i = 1, #dropdown.choices do
+                    local choice = dropdown.choices[i]
+                    local choiceFoundIndex = table.find(dropdown.value, choice)
+                    local labelSize = self:_GetTextBounds(choice)
+                    local choiceOrigin = Vector2.new(dropdownOrigin.x + self._padding, dropdownOrigin.y + totalHeight)
+                    local choiceSize = Vector2.new(dropdown.width, labelSize.y)
+                    local isHoveringChoice = self:_IsMouseWithinBounds(choiceOrigin, choiceSize)
+                    if isHoveringChoice and clickFrame then
+                        shouldCancel = not dropdown.multi
+                        if dropdown.multi then
+                            if choiceFoundIndex then table.remove(dropdown.value, choiceFoundIndex)
+                            else table.insert(dropdown.value, choice) end
                         else
-                            bundle.distText.Visible = false
+                            dropdown.value = {choice}
                         end
-
-                        bundle.tracer.Color = color
-                        bundle.tracer.From = Vector2.new(screenCX, screenBY)
-                        bundle.tracer.To = Vector2.new(spos.X, spos.Y)
-                        bundle.tracer.Visible = state.espShowTracers
+                        if dropdown.callback then dropdown.callback(dropdown.value) end
                     end
-                end
-            end
-        end
-
-        for instance, bundle in pairs(itemDrawings) do
-            if not seenThisFrame[instance] then
-                if instance.Parent then
-                    bundle.box.Visible = false; bundle.nameText.Visible = false
-                    bundle.distText.Visible = false; bundle.tracer.Visible = false
-                else
-                    bundle.box:Remove(); bundle.nameText:Remove()
-                    bundle.distText:Remove(); bundle.tracer:Remove()
-                    itemDrawings[instance] = nil
-                end
-            end
-        end
-    end
-
-    ui:SetMenuTitle("jade | bizzare lineage")
-    ui:SetMenuSize(Vector2.new(620, 680))
-    ui:CenterMenu()
-    ui:SetWatermarkEnabled(true)
-    ui:SetBlockRobloxInput(false)
-
-    local tabMain = ui:Tab("Main")
-
-
-    local npcSection = tabMain:Section("NPC Killer")
-
-    local npcToggle = npcSection:Toggle("NPC Killer", false, function(enabled)
-        state.npcKillerEnabled = enabled
-        if enabled then
-            startNpcKillerForCurrentMethod()
-        else
-            stopAllNpcKillerLoops()
-            state.raidTarget = nil
-        end
-    end, false, "Automatically farms nearest NPC")
-    npcToggle:AddKeybind("mb4", "Toggle", true)
-
-    local function getUniqueNPCNames()
-        local names = {"Nearest"}
-        local seen = {}
-        local liveFolder = workspace:FindFirstChild("Live")
-        if not liveFolder then return names end
-        local playerNames = getPlayerNames()
-        
-        for _, npc in ipairs(liveFolder:GetChildren()) do
-            if not playerNames[npc.Name] and npc.Name ~= "Server" and npc:IsA("Model") and not npc.Name:find("ostage") then
-                if npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") and npc.Humanoid.Health > 0 then
-                    local dName = getNPCDisplayName(npc)
-                    if not seen[dName] then
-                        seen[dName] = true
-                        table.insert(names, dName)
-                    end
-                end
-            end
-        end
-        table.sort(names, function(a,b) 
-            if a == "Nearest" then return b ~= "Nearest" end
-            if b == "Nearest" then return false end
-            return a < b 
-        end)
-        return names
-    end
-
-    local targetDropdown = npcSection:Dropdown("Target NPC", { "Nearest" }, getUniqueNPCNames(), false, function(selected)
-        local target = "Nearest"
-        if type(selected) == "table" then
-            target = selected[1] or "Nearest"
-        elseif type(selected) == "string" then
-            target = selected
-        end
-        state.npcTargetName = target
-        state.raidTarget = nil
-    end)
-
-    npcSection:Button("Refresh Target List", function()
-        local newNames = getUniqueNPCNames()
-        if targetDropdown.UpdateChoices then
-            targetDropdown:UpdateChoices(newNames)
-        end
-    end)
-
-    local function autoPveQuestLoop()
-        if state.npcKillerEnabled then
-            state.npcKillerEnabled = false
-            stopAllNpcKillerLoops()
-            pcall(function() npcToggle:SetValue(false) end)
-        end
-        
-        while state.autoPveQuest and not state.shouldUnload do
-            teleportTo(Vector3.new(701.67, 894.56, -221.74))
-            task.wait(0.5)
-            
-            if keypress then pcall(keypress, 0x45) end
-            task.wait(1.5)
-            if keyrelease then pcall(keyrelease, 0x45) end
-            
-            task.wait(1)
-            
-            local searchStart = os.clock()
-            while os.clock() - searchStart < 8 and state.autoPveQuest do
-                local effects = workspace:FindFirstChild("Effects")
-                local questGroup = effects and effects:FindFirstChild("questbrick")
-                local questBrick = questGroup and questGroup:FindFirstChild("questbrick") or questGroup
-                
-                local qType = getPveQuestType()
-                
-                if qType == "Deliver" then
-                    if questBrick and questBrick:IsA("BasePart") then
-                        teleportTo(questBrick.Position)
-                        task.wait(3)
-                        
-                        if keypress then pcall(keypress, 0x45) end
-                        task.wait(2)
-                        if keyrelease then pcall(keyrelease, 0x45) end
-                        
-                        task.wait(1)
-                        break
-                    end
-                elseif qType == "Exterminate" then
-                    local liveFolder = workspace:FindFirstChild("Live")
-                    local highlightedNPC = nil
-                    local playerNames = getPlayerNames()
-                    local shortestDist = math.huge
-                    local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                    
-                    if liveFolder and myRoot then
-                        for _, npc in ipairs(liveFolder:GetChildren()) do
-                            if not playerNames[npc.Name] and npc:FindFirstChildWhichIsA("Highlight") and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
-                                local npcHRP = npc:FindFirstChild("HumanoidRootPart")
-                                if npcHRP then
-                                    local dist = distance3D(npcHRP.Position, myRoot.Position)
-                                    if type(dist) == "number" and dist < shortestDist then
-                                        shortestDist = dist
-                                        highlightedNPC = npc
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    
-                    if highlightedNPC then
-                        task.wait(1)
-                        if highlightedNPC.Parent and highlightedNPC:FindFirstChildWhichIsA("Highlight") and highlightedNPC:FindFirstChild("Humanoid") and highlightedNPC.Humanoid.Health > 0 then
-                            local centerPos = highlightedNPC:FindFirstChild("HumanoidRootPart") and highlightedNPC.HumanoidRootPart.Position
-                            if centerPos then
-                                state.pveTargets = {}
-                                local hasTargets = false
-                                if liveFolder then
-                                    for _, npc in ipairs(liveFolder:GetChildren()) do
-                                        if not playerNames[npc.Name] and npc:FindFirstChildWhichIsA("Highlight") and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
-                                            local hrp = npc:FindFirstChild("HumanoidRootPart")
-                                            if hrp and distance3D(hrp.Position, centerPos) <= 500 then
-                                                state.pveTargets[npc] = true
-                                                hasTargets = true
-                                            end
-                                        end
-                                    end
-                                end
-                                
-                                if hasTargets then
-                                    state.npcKillerEnabled = true
-                                    startNpcKillerForCurrentMethod()
-                                    pcall(function() npcToggle:SetValue(true) end)
-                                    
-                                    while state.autoPveQuest and state.npcKillerEnabled do
-                                        local stillAlive = false
-                                        for npc, _ in pairs(state.pveTargets) do
-                                            if npc.Parent and npc:FindFirstChildWhichIsA("Highlight") and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
-                                                stillAlive = true
-                                                break
-                                            end
-                                        end
-                                        if not stillAlive then break end
-                                        task.wait(0.2)
-                                    end
-                                    
-                                    state.pveTargets = nil
-                                    state.npcKillerEnabled = false
-                                    stopAllNpcKillerLoops()
-                                    pcall(function() npcToggle:SetValue(false) end)
-                                    
-                                    task.wait(1)
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-                
-                task.wait(0.1)
-            end
-            
-            if keyrelease then pcall(keyrelease, 0x45) end
-        end
-    end
-
-    local function startAutoPveQuest()
-        if state.autoPveThread then pcall(task.cancel, state.autoPveThread) end
-        state.autoPveThread = task.spawn(autoPveQuestLoop)
-    end
-
-    local function stopAutoPveQuest()
-        if state.autoPveThread then pcall(task.cancel, state.autoPveThread); state.autoPveThread = nil end
-        if state.npcKillerEnabled and state.autoPveQuest then
-            state.npcKillerEnabled = false
-            stopAllNpcKillerLoops()
-            pcall(function() npcToggle:SetValue(false) end)
-        end
-        if keyrelease then pcall(keyrelease, 0x45) end
-    end
-
-    local pveToggle = npcSection:Toggle("Auto PVE Quest", false, function(enabled)
-        state.autoPveQuest = enabled
-        if enabled then
-            startAutoPveQuest()
-        else
-            stopAutoPveQuest()
-        end
-    end, false, "Automatically claims and completes PVE quests")
-    pveToggle:AddKeybind("", "Toggle", true)
-
-    local farmingMethods = { "Under", "Back", "Top", "Orbit" }
-
-    npcSection:Dropdown("Method", { "Top" }, farmingMethods, false, function(selected)
-        local method = "Top"
-        if type(selected) == "table" then
-            method = selected[1] or "Top"
-        elseif type(selected) == "string" then
-            method = selected
-        end
-        state.npcMethod = method
-        if state.npcKillerEnabled then
-            startNpcKillerForCurrentMethod()
-        end
-    end)
-
-    local voidDioToggle = npcSection:Toggle("Void DIO", false, function(enabled)
-        state.voidDio = enabled
-        if enabled then
-            startVoidDio()
-        else
-            stopVoidDio()
-        end
-    end, false)
-    voidDioToggle:AddKeybind("j", "Toggle", true)
-
-    local exploitsSection = tabMain:Section("Exploits")
-
-    exploitsSection:Toggle("Freeze Animations", false, function(v)
-        state.freezeAnimations = v
-        updateFreezeAnimations(v)
-    end)
-
-    exploitsSection:Toggle("Auto Attack", false, function(v)
-        state.autoAttack = v
-        if v then
-            if state.autoAttackThread then task.cancel(state.autoAttackThread) end
-            state.autoAttackThread = task.spawn(autoAttackLoop)
-        else
-            if state.autoAttackThread then task.cancel(state.autoAttackThread); state.autoAttackThread = nil end
-        end
-    end)
-
-    exploitsSection:Toggle("Auto Meditate", false, function(v)
-        state.autoMeditate = v
-        if v then
-            if state.autoMeditateThread then task.cancel(state.autoMeditateThread) end
-            state.autoMeditateThread = task.spawn(autoMeditateLoop)
-        else
-            if state.autoMeditateThread then task.cancel(state.autoMeditateThread); state.autoMeditateThread = nil end
-        end
-    end)
-
-    exploitsSection:Toggle("Auto Play", false, function(v)
-        state.autoPlay = v
-        if v then
-            if state.autoPlayThread then task.cancel(state.autoPlayThread) end
-            state.autoPlayThread = task.spawn(autoPlayLoop)
-        else
-            if state.autoPlayThread then task.cancel(state.autoPlayThread); state.autoPlayThread = nil end
-        end
-    end)
-
-    exploitsSection:Toggle("Auto Replay", false, function(v)
-        state.autoReplay = v
-        if v then
-            if state.autoReplayThread then task.cancel(state.autoReplayThread) end
-            state.autoReplayThread = task.spawn(autoReplayLoop)
-        else
-            if state.autoReplayThread then task.cancel(state.autoReplayThread); state.autoReplayThread = nil end
-        end
-    end)
-
-
-
-    local methodTabs = tabMain:TabbedSection({"Orbit", "Under", "Back", "Top"})
-
-    methodTabs["Orbit"]:Slider("Radius", state.orbitRadius, 1, 3, 20, " studs", function(v) state.orbitRadius = v end)
-    methodTabs["Orbit"]:Slider("Speed", state.orbitSpeed, 1, 1, 10, "x", function(v) state.orbitSpeed = v end)
-    methodTabs["Under"]:Slider("Depth", state.underDepth, 1, 1, 50, " studs", function(v) state.underDepth = v end)
-    methodTabs["Back"]:Slider("Distance", state.backDistance, 1, 1, 50, " studs", function(v) state.backDistance = v end)
-    methodTabs["Top"]:Slider("Height", state.topHeight, 1, 1, 50, " studs", function(v) state.topHeight = v end)
-
-
-    local standSection = tabMain:Section("Stand")
-
-    standSection:Toggle("Auto Summon Stand", false, function(enabled)
-        state.autoSummonStand = enabled
-        if enabled then startAutoSummonStand() else stopAutoSummonStand() end
-    end, false, "Automatically resummons your stand when unsummoned")
-
-    local standRollStands = {
-        "Red Hot Chili Pepper", "Magician's Red", "The Hand", "Purple Haze",
-        "Crazy Diamond", "Golden Experience", "Anubis", "Killer Queen",
-        "Weather Report", "Stone Free", "Star Platinum", "The World",
-        "King Crimson", "The World High Voltage", "Whitesnake"
-    }
-
-    standSection:Dropdown("Target Stand", { "Star Platinum" }, standRollStands, false, function(selected)
-        if type(selected) == "table" then
-            state.targetStandRoll = selected[1] or "Star Platinum"
-        elseif type(selected) == "string" then
-            state.targetStandRoll = selected
-        end
-    end)
-
-    _G.autoStandRollToggle = standSection:Toggle("Auto Stand Roll", false, function(enabled)
-        state.autoStandRoll = enabled
-        if enabled then startAutoStandRoll() else stopAutoStandRoll() end
-    end, false, "Automatically uses arrows until target stand")
-
-    _G.stopOnAnySkinToggle = standSection:Toggle("Stop on Any Skin", false, function(enabled)
-        state.stopOnAnySkin = enabled
-    end, false, "Stops the auto-roll if any skin is obtained")
-
-    _G.currentStandLabel1 = standSection:Label("Stand: None", Color3.fromRGB(200, 200, 200))
-    _G.currentStandLabel2 = standSection:Label("Trait: None", Color3.fromRGB(200, 200, 200))
-    _G.currentStandLabel3 = standSection:Label("Speed: 0", Color3.fromRGB(200, 200, 200))
-    _G.currentStandLabel4 = standSection:Label("Spec: 0", Color3.fromRGB(200, 200, 200))
-    _G.currentStandLabel5 = standSection:Label("Str: 0", Color3.fromRGB(200, 200, 200))
-    _G.currentStandLabel6 = standSection:Label("Skin: None", Color3.fromRGB(200, 200, 200))
-
-    task.spawn(function()
-        while not state.shouldUnload do
-            pcall(updateStandLabel)
-            pcall(function()
-                local sd = getStandData()
-                local standName = (sd and sd.Name) or "None"
-                local username = player.Name
-                ui:SetMenuTitle("jade | bizzare lineage")
-                ui:SetWatermarkTitle("jade | " .. username .. " | " .. standName .. " | bizzare lineage")
-            end)
-            task.wait(2)
-        end
-    end)
-
-
-    local itemTabs = tabMain:TabbedSection({"Pickup", "Settings"})
-
-    local autoCollectToggle = itemTabs["Pickup"]:Toggle("Auto Collect", false, function(enabled)
-        state.autoCollect = enabled
-        if enabled then startAutoCollect() else stopAutoCollect() end
-    end, false, "Collect selected items automatically")
-    autoCollectToggle:AddKeybind("b", "Toggle", true)
-
-    itemTabs["Pickup"]:Dropdown("Target Items", {}, trackedItemNames, true, function(selected)
-        state.collectTargetNames = {}
-        for _, name in ipairs(selected) do
-            state.collectTargetNames[name] = true
-        end
-    end)
-
-    itemTabs["Settings"]:Toggle("Stealth", false, function(enabled)
-        state.stealthCollect = enabled
-    end, false, "Teleports below items instead of on top")
-
-    itemTabs["Settings"]:Toggle("Safe Spot", state.collectSafeSpot, function(v)
-        state.collectSafeSpot = v
-    end, false, "Return to safe spot when nothing to pick up")
-
-    itemTabs["Settings"]:Toggle("Pose in Safespot", false, function(v)
-        state.poseInSafespot = v
-    end, false, "Summon stand and pose to heal at safe spot")
-
-
-
-    local tabTeleports = ui:Tab("Teleports")
-    local busSection = tabTeleports:Section("Bus Stops")
-
-    local busStopNumbers = {}
-    for i = 1, 19 do table.insert(busStopNumbers, tostring(i)) end
-
-    local selectedBusStop = "1"
-
-    busSection:Dropdown("Bus Stop", { "1" }, busStopNumbers, false, function(selected)
-        if type(selected) == "table" then
-            selectedBusStop = selected[1] or "1"
-        elseif type(selected) == "string" then
-            selectedBusStop = selected
-        end
-    end)
-
-    busSection:Button("Teleport to Bus Stop", function()
-        pcall(function()
-            local map = workspace:FindFirstChild("Map")
-            if not map then return end
-            local busStops = map:FindFirstChild("Bus Stops")
-            if not busStops then return end
-            local stop = busStops:FindFirstChild(selectedBusStop)
-            if not stop then return end
-            local target
-            if selectedBusStop == "17" or selectedBusStop == "18" or selectedBusStop == "19" then
-                target = stop:FindFirstChild("Bus Parade Glass")
-            else
-                local parade = stop:FindFirstChild("New Bus Parade")
-                if parade then target = parade:FindFirstChild("Plane.002") end
-            end
-            if not target then return end
-            local pos = resolveWorldPosition(target)
-            if pos then
-                teleportTo(Vector3.new(pos.X, pos.Y + 5, pos.Z))
-            end
-        end)
-    end)
-
-    local missionSection = tabTeleports:Section("Mission")
-    missionSection:Button("Teleport to Mission", function()
-        pcall(function()
-            local effects = workspace:FindFirstChild("Effects")
-            local questbrick = effects and effects:FindFirstChild("questbrick")
-            local part = questbrick and (questbrick.PrimaryPart or questbrick:FindFirstChildOfClass("BasePart"))
-            if part then teleportTo(part.Position + Vector3.new(0, 3, 0)) end
-        end)
-    end)
-
-
-    local raidSection = tabTeleports:Section("Raid NPCs")
-
-    local raidNPCs = {
-        { name = "Kira",   pos = Vector3.new(1025, 875.93, -652.89) },
-        { name = "Chumbo", pos = Vector3.new(1075.07, 884.23, 207.34) },
-        { name = "DIO",    pos = Vector3.new(2797.35, 950.71, 743.84) },
-        { name = "Avdol",  pos = Vector3.new(334.18, 876.08, 1021.47) },
-    }
-    local raidNames = {}
-    for _, v in ipairs(raidNPCs) do table.insert(raidNames, v.name) end
-    local selectedRaid = raidNames[1]
-
-    raidSection:Dropdown("Raid NPC", { raidNames[1] }, raidNames, false, function(selected)
-        if type(selected) == "table" then selectedRaid = selected[1] or raidNames[1]
-        elseif type(selected) == "string" then selectedRaid = selected end
-    end)
-
-    raidSection:Button("Teleport", function()
-        for _, v in ipairs(raidNPCs) do
-            if v.name == selectedRaid then teleportTo(v.pos); break end
-        end
-    end)
-
-
-    local gangSection = tabTeleports:Section("Gang Territories")
-
-    local function teleportToGangZone(zoneName)
-        pcall(function()
-            local map = workspace:FindFirstChild("Map")
-            if not map then return end
-            local gangTerritories = map:FindFirstChild("Gang Territories")
-            if not gangTerritories then return end
-            local territory = gangTerritories:FindFirstChild(zoneName)
-            if not territory then return end
-            local zone = territory:FindFirstChild("Zone")
-            if not zone then return end
-            local pos = resolveWorldPosition(zone)
-            if pos then
-                teleportTo(Vector3.new(pos.X, pos.Y + 5, pos.Z))
-            end
-        end)
-    end
-
-    local gangNames = { "Morioh Center", "Port", "Gas Station" }
-    local selectedGang = gangNames[1]
-
-    gangSection:Dropdown("Territory", { gangNames[1] }, gangNames, false, function(selected)
-        if type(selected) == "table" then selectedGang = selected[1] or gangNames[1]
-        elseif type(selected) == "string" then selectedGang = selected end
-    end)
-
-    gangSection:Button("Teleport", function()
-        teleportToGangZone(selectedGang)
-    end)
-
-
-    local raceSection = tabTeleports:Section("Race NPCs")
-
-    local raceNPCs = {
-        { name = "Hamon",          pos = Vector3.new(1749.23, 874.65, -101.98) },
-        { name = "Cyborg",         pos = Vector3.new(435.83, 886.06, -345.48) },
-        { name = "Elder Vampire",  pos = Vector3.new(2655.92, 949.90, 789.73) },
-    }
-    local raceNames = {}
-    for _, v in ipairs(raceNPCs) do table.insert(raceNames, v.name) end
-    local selectedRace = raceNames[1]
-
-    raceSection:Dropdown("Race NPC", { raceNames[1] }, raceNames, false, function(selected)
-        if type(selected) == "table" then selectedRace = selected[1] or raceNames[1]
-        elseif type(selected) == "string" then selectedRace = selected end
-    end)
-
-    raceSection:Button("Teleport", function()
-        for _, v in ipairs(raceNPCs) do
-            if v.name == selectedRace then teleportTo(v.pos); break end
-        end
-    end)
-
-
-    local fightingSection = tabTeleports:Section("Fighting Style NPCs")
-
-    local fightingNPCs = {
-        { name = "Kendo",  pos = Vector3.new(2060.91, 874.65, -47.55) },
-        { name = "Karate", pos = Vector3.new(544.13, 886.06, -252.10) },
-        { name = "Boxing", pos = Vector3.new(1109, 912, 11) },
-    }
-    local fightingNames = {}
-    for _, v in ipairs(fightingNPCs) do table.insert(fightingNames, v.name) end
-    local selectedFighting = fightingNames[1]
-
-    fightingSection:Dropdown("Fighting Style", { fightingNames[1] }, fightingNames, false, function(selected)
-        if type(selected) == "table" then selectedFighting = selected[1] or fightingNames[1]
-        elseif type(selected) == "string" then selectedFighting = selected end
-    end)
-
-    fightingSection:Button("Teleport", function()
-        for _, v in ipairs(fightingNPCs) do
-            if v.name == selectedFighting then teleportTo(v.pos); break end
-        end
-    end)
-
-
-    local bossSection = tabTeleports:Section("World Bosses")
-
-    local bossNPCs = {
-        { name = "Dr. Bosconovitch",           pos = Vector3.new(1671.93, 1005.69, 1637.73) },
-        { name = "Zombie Rudol von Stroheim",  pos = Vector3.new(1872.55, 956.80, 1886.28) },
-        { name = "Okuyasu Nijimura Prime",     pos = Vector3.new(2332.47, 874.61, 323.02) },
-        { name = "Akira Otoishi",              pos = Vector3.new(-1648.22, 893.65, 972.03) },
-        { name = "Miyamoto Musashi",           pos = Vector3.new(476.21, 886.94, -82.79) },
-    }
-    local bossNames = {}
-    for _, v in ipairs(bossNPCs) do table.insert(bossNames, v.name) end
-    local selectedBoss = bossNames[1]
-
-    bossSection:Dropdown("World Boss", { bossNames[1] }, bossNames, false, function(selected)
-        if type(selected) == "table" then selectedBoss = selected[1] or bossNames[1]
-        elseif type(selected) == "string" then selectedBoss = selected end
-    end)
-
-    bossSection:Button("Teleport", function()
-        for _, v in ipairs(bossNPCs) do
-            if v.name == selectedBoss then teleportTo(v.pos); break end
-        end
-    end)
-
-
-    local miscSection = tabTeleports:Section("Misc")
-
-    local pvpBoardToggle = miscSection:Toggle("PVP Board", false, function(enabled)
-        if enabled then
-            teleportTo(Vector3.new(2632.96, 874.66, -211.93))
-        end
-    end)
-    pvpBoardToggle:AddKeybind("", "Toggle", true)
-
-
-    local tabPvP = ui:Tab("PvP")
-    local pvpSection = tabPvP:Section("Auto PvP")
-
-    local function getPlayerNamesList()
-        local list = {}
-        for _, p in ipairs(players:GetPlayers()) do
-            if p ~= player then table.insert(list, p.Name) end
-        end
-        table.sort(list)
-        return list
-    end
-
-    local pvpTargetDropdown = pvpSection:Dropdown("Select Player", {}, getPlayerNamesList(), false, function(selected)
-        if type(selected) == "table" then state.pvpTargetName = selected[1] or ""
-        elseif type(selected) == "string" then state.pvpTargetName = selected end
-        state.pvpTarget = nil
-    end)
-
-    pvpSection:Button("Refresh Players", function()
-        if pvpTargetDropdown.UpdateChoices then
-            pvpTargetDropdown:UpdateChoices(getPlayerNamesList())
-        end
-    end)
-
-    pvpSection:Toggle("Auto PvP", false, function(v)
-        state.autoPvP = v
-        if v then
-            if state.autoPvPThread then task.cancel(state.autoPvPThread) end
-            state.autoPvPThread = task.spawn(autoPvPLoop)
-        else
-            if state.autoPvPThread then task.cancel(state.autoPvPThread); state.autoPvPThread = nil end
-        end
-    end)
-
-    local pvpConfigSection = tabPvP:Section("PvP Config")
-    pvpConfigSection:Dropdown("Direction", { "Down" }, { "Down", "Up" }, false, function(v)
-        state.pvpHeightDirection = (v == "Up") and 1 or -1
-    end)
-
-    pvpConfigSection:Slider("Height Offset", state.pvpHeightOffset, 1, 0, 15, " studs", function(v)
-        state.pvpHeightOffset = v
-    end)
-
-
-    local tabESP = ui:Tab("ESP")
-    local espSection = tabESP:Section("Item ESP")
-
-    espSection:Toggle("Item ESP", false, function(enabled)
-        state.itemESP = enabled
-        if enabled then
-            state.itemScanInitialized  = false
-            state.itemCacheLastRefresh = 0
-        else
-            hideAllItemDrawings()
-        end
-    end, false, "Show ESP for items")
-
-    espSection:Toggle("Show Box", state.espShowBox, function(v) state.espShowBox = v end)
-    espSection:Toggle("Show Name", state.espShowName, function(v) state.espShowName = v end)
-    espSection:Toggle("Show Distance", state.espShowDistance, function(v) state.espShowDistance = v end)
-    espSection:Toggle("Tracers", state.espShowTracers, function(v) state.espShowTracers = v end)
-
-
-    local colorsSection = tabESP:Section("Colors")
-
-    for _, item in ipairs(trackedItems) do
-        local t = colorsSection:Toggle(item.short, true, function() end)
-        t:AddColorpicker("Color", item.color, false, function(newColor)
-            state.itemColors[item.name] = newColor
-        end)
-    end
-
-
-    local playerESPSection = tabESP:Section("Player ESP")
-
-    local standESPToggle = playerESPSection:Toggle("Player Stand ESP", false, function(enabled)
-        state.playerStandESP = enabled
-    end, false, "Show other players stand names")
-    standESPToggle:AddColorpicker("Stand ESP Color", state.standESPColor, false, function(newColor)
-        state.standESPColor = newColor
-    end)
-
-
-    local _, settingsSection = ui:CreateSettingsTab("Settings")
-    settingsSection:Button("Unload", function() state.shouldUnload = true end)
-    _G.__bizzareLineageUnload = function() state.shouldUnload = true end
-
-
-    local standESPDrawings = {}
-
-    local function renderPlayerStandESP()
-        if not state.playerStandESP then
-            for k, d in pairs(standESPDrawings) do
-                d.nameText.Visible = false
-                d.distText.Visible = false
-            end
-            return
-        end
-
-        local root = getRootPart()
-        local rootPos = root and root.Position
-        local liveFolder = workspace:FindFirstChild("Live")
-        if not liveFolder then return end
-
-        local seenThisFrame = {}
-
-        for _, p in ipairs(players:GetPlayers()) do
-            if p ~= player then
-                pcall(function()
-                    local charModel = liveFolder:FindFirstChild(p.Name)
-                    if not charModel then return end
-                    if p.Name == player.Name then return end
-                    local val = charModel:GetAttribute("SummonedStand") or ""
-                    if type(val) ~= "string" then val = tostring(val) end
-                    local hasStand = #val >= 2
-                    if not hasStand then val = "No Stand Equipped" end
-
-                    local hrp = charModel:FindFirstChild("HumanoidRootPart")
-                        or charModel:FindFirstChild("Head")
-                    if not hrp then return end
-                    local wpos = hrp.Position + Vector3.new(0, 4, 0)
-
-                    local okW, spos, onScreen = pcall(WorldToScreen, wpos)
-                    if not okW or not onScreen or not spos then return end
-
-                    seenThisFrame[p.Name] = true
-
-                    local bundle = standESPDrawings[p.Name]
-                    if not bundle then
-                        local nameText = Drawing.new("Text")
-                        nameText.Center = true; nameText.Outline = true
-                        nameText.Font = Drawing.Fonts.SystemBold
-                        nameText.Size = 15; nameText.Visible = false; nameText.ZIndex = 5
-                        nameText.Color = state.standESPColor
-
-                        local distText = Drawing.new("Text")
-                        distText.Center = true; distText.Outline = true
-                        distText.Font = Drawing.Fonts.System
-                        distText.Size = 12; distText.Visible = false; distText.ZIndex = 5
-                        distText.Color = Color3.fromRGB(200, 200, 200)
-
-                        bundle = { nameText = nameText, distText = distText }
-                        standESPDrawings[p.Name] = bundle
-                    end
-
-                    bundle.nameText.Text = val
-                    bundle.nameText.Color = state.standESPColor
-                    bundle.nameText.Position = Vector2.new(spos.X, spos.Y)
-                    bundle.nameText.Visible = true
-
-                    if rootPos then
-                        local d = math.floor(distance3D(hrp.Position, rootPos))
-                        bundle.distText.Text = d .. " studs"
-                        bundle.distText.Position = Vector2.new(spos.X, spos.Y + 16)
-                        bundle.distText.Visible = true
+                    local choiceColor = choiceFoundIndex and self._theming.accent or (isHoveringChoice and self._theming.text or self._theming.subtext)
+                    if isHoveringChoice then
+                        self:_Draw('dropdown_choice_bg_' .. tostring(i), 'rect', self._theming.surface1, 101, Vector2.new(dropdownOrigin.x + 2, choiceOrigin.y - 1), Vector2.new(dropdown.width - 4, labelSize.y + 2), true)
                     else
-                        bundle.distText.Visible = false
+                        self:_Undraw('dropdown_choice_bg_' .. tostring(i))
                     end
-                end)
+                    self:_Draw('dropdown_choice_' .. tostring(i), 'text', choiceColor, 102, choiceOrigin, choice, true)
+                    totalHeight = totalHeight + labelSize.y + self._padding
+                end
+                self:_Draw('dropdown_crust', 'rect', self._theming.crust, 100, dropdownOrigin, Vector2.new(dropdown.width, totalHeight), false)
+                self:_Draw('dropdown_body', 'rect', self._theming.surface0, 101, dropdownOrigin + Vector2.new(1, 1), Vector2.new(dropdown.width - 2, totalHeight - 2), true)
+                if clickFrame and shouldCancel then self:_RemoveDropdown() end
+                clickFrame = false
             end
-        end
 
-        for name, bundle in pairs(standESPDrawings) do
-            if not seenThisFrame[name] then
-                bundle.nameText.Visible = false
-                bundle.distText.Visible = false
+            local colorpicker = self._active_colorpicker
+            if colorpicker then
+                local colorpickerFade = 1 - (colorpicker._spawned_at - (os.clock() - 0.25)) / 0.25
+                if colorpickerFade < 1.1 then self:_SetOpacityStartsWith('colorpicker_', clamp(colorpickerFade, 0, 1)) end
+                local shouldCancel = true
+                local colorpickerSize = Vector2.new(200, 200)
+                local colorpickerOrigin = colorpicker.position
+                local colorpickerTitle = colorpicker.label
+                local colorpickerTitleSize = self:_GetTextBounds(colorpickerTitle)
+                self:_Draw('colorpicker_crust', 'rect', self._theming.crust, 100, colorpickerOrigin, colorpickerSize, false)
+                self:_Draw('colorpicker_body', 'rect', self._theming.surface0, 101, colorpickerOrigin + Vector2.new(1, 1), colorpickerSize - Vector2.new(2, 2), true)
+                self:_Draw('colorpicker_body_border_outer', 'rect', self._theming.border1, 103, colorpickerOrigin + Vector2.new(1, 1), colorpickerSize - Vector2.new(2, 2), false)
+                self:_Draw('colorpicker_title', 'text', self._theming.text, 104, colorpickerOrigin + Vector2.new(self._padding + 1, self._padding + 2), colorpickerTitle, true)
+                local palleteContentPos = colorpickerOrigin + Vector2.new(self._padding + 2, self._padding + colorpickerTitleSize.y + 6)
+                local palleteContentSize = colorpickerSize - Vector2.new(self._padding * 2 + 4, self._padding * 3 + colorpickerTitleSize.y)
+                self:_Draw('colorpicker_body_border_inner', 'rect', self._theming.border1, 103, palleteContentPos - Vector2.new(1, 1), palleteContentSize + Vector2.new(2, 2), false)
+                self:_Draw('colorpicker_body_content', 'rect', self._theming.body, 105, palleteContentPos, palleteContentSize, true)
+                local mousePos = self:_GetMousePos()
+                local palleteSize = palleteContentSize - Vector2.new(self._padding * 2, self._padding * 2)
+                local hueSize = Vector2.new(palleteSize.x, 10)
+                palleteSize = palleteSize - Vector2.new(0, hueSize.y + self._padding)
+                local palletePos = palleteContentPos + Vector2.new(self._padding, self._padding)
+                local huePos = palletePos + Vector2.new(0, palleteSize.y + self._padding)
+                if self:_IsMouseWithinBounds(huePos, hueSize) and mouseHeld then
+                    local x = clamp((mousePos.x - huePos.x) / hueSize.x, 0, 1)
+                    colorpicker._h = x
+                    shouldCancel = false
+                end
+                if self:_IsMouseWithinBounds(palletePos, palleteSize) and mouseHeld then
+                    local sx = clamp((mousePos.x - palletePos.x) / palleteSize.x, 0, 1)
+                    local vy = clamp((mousePos.y - palletePos.y) / palleteSize.y, 0, 1)
+                    colorpicker._s = sx
+                    colorpicker._v = 1 - vy
+                    shouldCancel = false
+                end
+                local hueColor = Color3.fromHSV(colorpicker._h, 1, 1)
+                self:_Draw('colorpicker_pallete_color', 'gradient', nil, 110, 'horizontal', palletePos, palleteSize, Color3.fromRGB(255, 255, 255), hueColor)
+                self:_Draw('colorpicker_pallete_fade', 'gradient', nil, 111, 'vertical', palletePos, palleteSize, {R=0, G=0, B=0, A=0}, {R=0, G=0, B=0, A=1})
+                self:_Draw('colorpicker_pallete_hue', 'gradient', nil, 111, 'horizontal', huePos, hueSize,
+                    Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 255, 0), Color3.fromRGB(0, 255, 0),
+                    Color3.fromRGB(0, 255, 255), Color3.fromRGB(0, 0, 255), Color3.fromRGB(255, 0, 255), Color3.fromRGB(255, 0, 0))
+                local newColor = Color3.fromHSV(colorpicker._h, colorpicker._s, colorpicker._v)
+                if colorpicker.callback then colorpicker.callback(newColor) end
+                if clickFrame and shouldCancel then self:_RemoveColorpicker() end
+                clickFrame = false
             end
+
+            local menuTitleSize = self:_GetTextBounds(menuTitle)
+            self:_Draw('menu_crust', 'rect', self._theming.crust, 1, Vector2.new(self.x, self.y), Vector2.new(self.w, self.h), false)
+            self:_Draw('menu_body', 'rect', self._theming.surface0, 2, Vector2.new(self.x + 1, self.y + 1), Vector2.new(self.w - 2, self.h - 2), true)
+            self:_Draw('menu_body_border_outer', 'rect', self._theming.border1, 3, Vector2.new(self.x + 1, self.y + 1), Vector2.new(self.w - 2, self.h - 2), false)
+            self:_Draw('menu_title', 'text', self._theming.text, 4, Vector2.new(self.x + self._padding + 1, self.y + self._padding + 2), menuTitle, true)
+            do
+                local s = menuTitleSize.y * 0.40
+                local hx = self.x + self._padding + 1 + menuTitleSize.x + 6
+                local hy = self.y + self._padding + 2 + menuTitleSize.y / 2 - s * 0.75
+                local hc = self._theming.accent
+                local r = s * 0.42
+                self:_Draw('menu_heart_cl', 'circle', hc, 5, Vector2.new(hx + s * 0.35, hy + r), r, true, 24)
+                self:_Draw('menu_heart_cr', 'circle', hc, 5, Vector2.new(hx + s * 1.05, hy + r), r, true, 24)
+                self:_Draw('menu_heart_bt', 'triangle', hc, 5, true,
+                    Vector2.new(hx + s * 0.35 - r, hy + r),
+                    Vector2.new(hx + s * 1.05 + r, hy + r),
+                    Vector2.new(hx + s * 0.7, hy + s * 1.5))
+            end
+            self:_UndrawStartsWith('menu_accent_snake')
+            self:_Draw('menu_accent_gradient', 'gradient', nil, 4, 'horizontal', Vector2.new(self.x + 2, self.y + 2), Vector2.new(self.w - 4, 2), self._theming.surface0, self._theming.accent, self._theming.surface0)
+
+            local bodyContentPos = Vector2.new(self.x + self._padding + 2, self.y + self._padding + menuTitleSize.y + 6)
+            local bodyContentSize = Vector2.new(self.w - self._padding * 2 - 4, self.h - self._padding * 2 - menuTitleSize.y - 8)
+            self:_Draw('menu_body_border_inner', 'rect', self._theming.border1, 11, bodyContentPos - Vector2.new(1, 1), bodyContentSize + Vector2.new(2, 2), false)
+            self:_Draw('menu_body_content', 'rect', self._theming.body, 10, bodyContentPos, bodyContentSize, true)
+
+            local tabIter = 0
+            local tabCount = #self._tab_order
+            local tabPanelWidth = self._tab_w
+            local tabPanelPos = bodyContentPos
+            local tabPanelSize = Vector2.new(tabPanelWidth, bodyContentSize.y)
+            self:_Draw('menu_tab_panel', 'rect', self._theming.surface0, 11, tabPanelPos, tabPanelSize, true)
+            self:_Draw('menu_tab_panel_border', 'rect', self._theming.border1, 12, tabPanelPos + Vector2.new(tabPanelWidth, 0), Vector2.new(1, tabPanelSize.y), true)
+            for _, tabName in ipairs(self._tab_order) do
+                local tabContent = self._tree[tabName]
+                local tabDrawId = 'menu_tab_' .. tostring(tabIter)
+                local dynamicTabH = clamp(math.floor(bodyContentSize.y / math.max(tabCount, 1)), 24, 40)
+                local tabSize = Vector2.new(tabPanelWidth, dynamicTabH)
+                local tabPosition = Vector2.new(tabPanelPos.x, tabPanelPos.y + dynamicTabH * tabIter)
+                local isOpen = self._open_tab == tabName
+                if isOpen then
+                    self:_Draw(tabDrawId .. '_backdrop', 'rect', self._theming.body, 13, tabPosition, tabSize, true)
+                    self:_Draw(tabDrawId .. '_accent', 'rect', self._theming.accent, 14, tabPosition, Vector2.new(2, tabSize.y), true)
+                else
+                    self:_UndrawStartsWith(tabDrawId .. '_backdrop')
+                    self:_Undraw(tabDrawId .. '_accent')
+                end
+                local tabTextColor = isOpen and self._theming.text or self._theming.subtext
+                self:_Draw(tabDrawId .. '_text', 'text', tabTextColor, 14, tabPosition + Vector2.new(self._padding + 2, tabSize.y/2), tabName, true, nil)
+                if tabIter ~= tabCount-1 then
+                    self:_Draw(tabDrawId .. '_border_b', 'rect', self._theming.border0, 13, tabPosition + Vector2.new(0, tabSize.y), Vector2.new(tabPanelWidth, 1), true)
+                end
+                if not isOpen and clickFrame and self:_IsMouseWithinBounds(tabPosition, tabSize) then
+                    self._open_tab = tabName
+                    self._tab_change_at = os.clock()
+                    self._input_ctx = nil
+                end
+
+                local sectionFade = 1 - (self._tab_change_at - (os.clock() - 0.25)) / 0.25
+                if sectionFade < 1.1 then self:_SetOpacityStartsWith('menu_section_', clamp(sectionFade, 0, 1)) end
+
+                local contentAreaX = bodyContentPos.x + tabPanelWidth + 1
+                local contentAreaW = bodyContentSize.x - tabPanelWidth - 1
+                local sectionCount = #tabContent._section_order
+                local sectionIter = 0
+                local sectionWidth = contentAreaW/2 - self._padding * 1.5
+                local totalSectionHeightR = self._padding * 1.5
+                local totalSectionHeightL = self._padding * 1.5
+                for _, sectionName in ipairs(tabContent._section_order) do
+                    local sectionContent = tabContent._items[sectionName]
+                    local sectionDrawId = 'menu_section_' .. tostring(sectionIter) .. '_' .. tostring(tabIter)
+                    local isLastSection = sectionIter >= sectionCount-2
+                    local isSectionMirror = sectionIter % 2 == 1
+                    local sectionTitleSize = self:_GetTextBounds(sectionName)
+                    local hasMiniTabs = sectionContent._mini_tabs ~= nil
+                    local sectionPos = Vector2.new(contentAreaX + self._padding, bodyContentPos.y)
+                    local sectionHeight = self._padding + sectionTitleSize.y/2
+                    if isSectionMirror then
+                        sectionPos = sectionPos + Vector2.new(sectionWidth + self._padding, totalSectionHeightR + sectionTitleSize.y/2)
+                    else
+                        sectionPos = sectionPos + Vector2.new(0, totalSectionHeightL + sectionTitleSize.y/2)
+                    end
+
+                    if isOpen then
+                        if hasMiniTabs then
+                            local mtTabH = sectionTitleSize.y + self._padding + 4
+                            local mtY = sectionPos.y - menuTitleSize.y/2 - 2
+                            local mtX = sectionPos.x
+                            local totalTabW = sectionWidth
+                            local tabCount = #sectionContent._mini_tabs
+
+                            self:_Draw(sectionDrawId .. '_mt_border', 'rect', self._theming.border0, 18, Vector2.new(mtX, mtY), Vector2.new(totalTabW, mtTabH), false)
+                            self:_Draw(sectionDrawId .. '_mt_strip', 'rect', self._theming.crust, 17, Vector2.new(mtX + 1, mtY + 1), Vector2.new(totalTabW - 2, mtTabH - 2), true)
+
+                            local innerW = totalTabW - 2
+                            local tabW = math.floor(innerW / tabCount)
+
+                            for mtIdx, mtName in ipairs(sectionContent._mini_tabs) do
+                                local mtDrawId = sectionDrawId .. '_mt_' .. tostring(mtIdx)
+                                local tabX = mtX + 1 + (mtIdx - 1) * tabW
+                                local isLastTab = mtIdx == tabCount
+                                local actualW = isLastTab and (innerW - (tabCount - 1) * tabW) or tabW
+                                local isActiveMT = sectionContent._active_mini_tab == mtName
+                                local isHoveringMT = self:_IsMouseWithinBounds(Vector2.new(tabX, mtY), Vector2.new(actualW, mtTabH))
+
+                                local tabBg
+                                if isActiveMT then
+                                    tabBg = self._theming.surface0
+                                elseif isHoveringMT then
+                                    tabBg = self._theming.surface1
+                                else
+                                    tabBg = self._theming.crust
+                                end
+                                self:_Draw(mtDrawId .. '_bg', 'rect', tabBg, 20, Vector2.new(tabX, mtY + 1), Vector2.new(actualW, mtTabH - 2), true)
+
+                                if isActiveMT then
+                                    self:_Draw(mtDrawId .. '_accent', 'rect', self._theming.accent, 22, Vector2.new(tabX + 1, mtY + mtTabH - 3), Vector2.new(actualW - 2, 2), true)
+                                else
+                                    self:_Undraw(mtDrawId .. '_accent')
+                                end
+
+                                if mtIdx < tabCount then
+                                    self:_Draw(mtDrawId .. '_sep', 'rect', self._theming.border0, 21, Vector2.new(tabX + actualW, mtY + 3), Vector2.new(1, mtTabH - 6), true)
+                                end
+
+                                local mtLabelSize = self:_GetTextBounds(mtName)
+                                local labelX = tabX + math.floor((actualW - mtLabelSize.x) / 2)
+                                local labelY = mtY + math.floor((mtTabH - mtLabelSize.y) / 2) - 1
+                                local mtColor = isActiveMT and self._theming.accent or (isHoveringMT and self._theming.text or self._theming.subtext)
+                                self:_Draw(mtDrawId .. '_label', 'text', mtColor, 23, Vector2.new(labelX, labelY), mtName, true)
+
+                                if isHoveringMT and clickFrame then
+                                    sectionContent._active_mini_tab = mtName
+                                    clickFrame = false
+                                end
+                            end
+
+                            sectionHeight = sectionHeight + mtTabH - sectionTitleSize.y/2 + 2
+                        else
+                            self:_Draw(sectionDrawId .. '_title', 'text', self._theming.text, 20, sectionPos + Vector2.new(self._padding, -menuTitleSize.y/2), sectionName, true)
+                        end
+
+                        if hasMiniTabs and sectionContent._prev_mini_tab ~= sectionContent._active_mini_tab then
+                            for cleanIdx, cleanItem in ipairs(sectionContent._items) do
+                                if cleanItem._mini_tab ~= sectionContent._active_mini_tab then
+                                    self:_UndrawStartsWith(sectionDrawId .. '_item_' .. tostring(cleanIdx))
+                                end
+                            end
+                            sectionContent._prev_mini_tab = sectionContent._active_mini_tab
+                        end
+
+                        for sectionItemIter, sectionItem in ipairs(sectionContent._items) do
+                            if not hasMiniTabs or sectionItem._mini_tab == sectionContent._active_mini_tab then
+                            local sectionItemId = sectionDrawId .. '_item_' .. tostring(sectionItemIter)
+                            local sectionItemOrigin = Vector2.new(sectionPos.x + self._padding, sectionPos.y + sectionHeight)
+                            local itemType = sectionItem.type_
+                            local itemValue = sectionItem.value
+                            local itemCallback = sectionItem.callback
+
+                            if itemType == 'toggle' then
+                                local tickOrigin = sectionItemOrigin
+                                local tickSize = Vector2.new(self._font_size, self._font_size)
+                                local itemKeybind = sectionItem.keybind
+                                local itemColorpicker = sectionItem.colorpicker
+                                    if itemKeybind then
+                                        local keybindText = '[' .. (itemKeybind._listening and '...' or ((itemKeybind.value or '-'):upper())) .. ']'
+                                        local keybindLabelSize = self:_GetTextBounds(keybindText, nil, 10)
+                                        local keybindSize = Vector2.new(keybindLabelSize.x - 2, tickSize.y)
+                                        local keybindOrigin = sectionItemOrigin + Vector2.new(sectionWidth - keybindSize.x - self._padding * 2, 2)
+                                        local isHoveringKeybind = self:_IsMouseWithinBounds(keybindOrigin, keybindSize)
+                                        if isHoveringKeybind then
+                                        if clickFrame then
+                                            itemKeybind._listening = true
+                                            itemKeybind._listening_start = os.clock()
+                                            clickFrame = false
+                                        elseif ctxFrame and itemKeybind.canChange then
+                                            self:_SpawnDropdown(self:_GetMousePos(), 60, {itemKeybind.mode}, {'Hold', 'Toggle', 'Always'}, false, function(newValue)
+                                                itemKeybind.mode = newValue[1]
+                                                if itemKeybind.callback then itemKeybind.callback(self._inputs[itemKeybind.value] and self._inputs[itemKeybind.value].id or nil, newValue[1]) end
+                                            end)
+                                            ctxFrame = false
+                                        end
+                                    end
+                                    if itemKeybind._listening then
+                                        for keyName, key in pairs(self._inputs) do
+                                            if self:_IsKeyPressed(keyName) then
+                                                if keyName ~= 'm1' or os.clock() - itemKeybind._listening_start > 0.2 then
+                                                    local newValue = keyName ~= 'unbound' and keyName
+                                                    if itemKeybind.callback and self._inputs[newValue] then itemKeybind.callback(key.id, itemKeybind.mode) end
+                                                    itemKeybind.value = newValue
+                                                    itemKeybind._listening = false
+                                                end
+                                            end
+                                        end
+                                    end
+
+                                    local keybindColor = itemKeybind.value and self._theming.text or self._theming.subtext
+                                    self:_Draw(sectionItemId .. '_keybind', 'text', keybindColor, 20, keybindOrigin, keybindText, true, 'left', 10)
+                                elseif itemColorpicker then
+                                    local colorpickerSize = Vector2.new(tickSize.x * 2, tickSize.y)
+                                    local colorpickerOrigin = sectionItemOrigin + Vector2.new(sectionWidth - self._padding * 2 - colorpickerSize.x)
+                                    local isHoveringColorpicker = self:_IsMouseWithinBounds(colorpickerOrigin, colorpickerSize)
+                                    if isHoveringColorpicker then
+                                        if clickFrame then
+                                            self:_SpawnColorpicker(nil, itemColorpicker.label, itemColorpicker.value, function(newValue)
+                                                itemColorpicker.value = newValue
+                                                if itemColorpicker.callback then itemColorpicker.callback(newValue) end
+                                            end)
+                                            clickFrame = false
+                                        elseif ctxFrame then
+                                            self:_SpawnDropdown(self:_GetMousePos(), 60, {}, {'Copy', 'Paste'}, false, function(newValue)
+                                                if newValue[1] == 'Copy' then
+                                                    self._copied_color = itemColorpicker.value
+                                                elseif newValue[1] == 'Paste' then
+                                                    if self._copied_color then
+                                                        itemColorpicker.value = self._copied_color
+                                                        if itemColorpicker.callback then itemColorpicker.callback(self._copied_color) end
+                                                    else
+                                                        self:Notification('Color clipboard is empty!', 5)
+                                                    end
+                                                end
+                                            end)
+                                            ctxFrame = false
+                                        end
+                                    end
+                                    local tickColor = itemColorpicker.value
+                                    self:_Draw(sectionItemId .. '_colorpicker', 'gradient', nil, 20, 'vertical', colorpickerOrigin + Vector2.new(1, 1), colorpickerSize - Vector2.new(2, 2), tickColor)
+                                    self:_Draw(sectionItemId .. '_colorpicker_border', 'rect', self._theming.crust, 21, colorpickerOrigin, colorpickerSize, false)
+                                end
+
+                                local labelColor = sectionItem.text_color or (sectionItem.unsafe and self._theming.unsafe or (itemValue and self._theming.text or self._theming.subtext))
+                                if itemType == 'button' then
+                                    labelColor = sectionItem.text_color or self._theming.text
+                                end
+                                if not itemColorpicker or not itemColorpicker.overwrite then
+                                    local isHoveringTick = self:_IsMouseWithinBounds(tickOrigin, tickSize)
+                                    if isHoveringTick and clickFrame then
+                                        local newValue = not itemValue
+                                        sectionItem.value = newValue
+                                        if itemCallback then itemCallback(newValue) end
+                                        clickFrame = false
+                                    end
+                                    local tickColor = itemValue and self._theming.accent or self._theming.surface0
+                                    self:_Draw(sectionItemId .. '_tick', 'gradient', nil, 20, 'vertical', sectionItemOrigin + Vector2.new(1, 1), tickSize - Vector2.new(2, 2), tickColor)
+                                    self:_Draw(sectionItemId .. '_border', 'rect', self._theming.crust, 21, sectionItemOrigin, tickSize, false)
+                                else
+                                    labelColor = self._theming.text
+                                end
+
+                                local labelSize = self:_GetTextBounds(sectionItem.label)
+                                local labelPosition = sectionItemOrigin + Vector2.new(tickSize.x + self._padding, 0)
+
+                                if sectionItem.tooltip then
+                                    local hintSize = self:_GetTextBounds('(?)', nil, 10)
+                                    local hintPosition = labelPosition + Vector2.new(labelSize.x + hintSize.x - 4, hintSize.y / 2)
+                                    local isHoveringHint = self:_IsMouseWithinBounds(hintPosition - Vector2.new(3, 3), hintSize + Vector2.new(6, 6))
+
+                                    if isHoveringHint then
+                                        hoveredTooltip = sectionItem.tooltip
+                                    end
+
+                                    self:_Draw(sectionItemId .. '_hint', 'text', self._theming.subtext, 21, hintPosition, '(?)', true, 'center', 10)
+                                end
+                                self:_Draw(sectionItemId .. '_label', 'text', labelColor, 20, labelPosition, sectionItem.label, true)
+                                sectionHeight = sectionHeight + self._font_size + self._padding
+
+                            elseif itemType == 'slider' then
+                                local labelSize = self:_GetTextBounds(sectionItem.label)
+                                local sliderOrigin = Vector2.new(sectionItemOrigin.x + self._padding, sectionItemOrigin.y + labelSize.y + self._padding)
+                                local sliderSize = Vector2.new(sectionWidth - self._padding * 3, 6)
+                                local newValue = itemValue
+                                local isHoveringSlider = self:_IsMouseWithinBounds(sliderOrigin - Vector2.new(2, 6), sliderSize + Vector2.new(4, 12))
+                                if mouseHeld then
+                                    if isHoveringSlider and clickFrame then
+                                        self._slider_drag = sectionItemId
+                                        clickFrame = false
+                                    end
+                                    if mouseHeld and self._slider_drag == sectionItemId then
+                                        local mouseX = self:_GetMousePos().x - sliderOrigin.x
+                                        local percent = mouseX / sliderSize.x
+                                        percent = clamp(percent, 0, 1)
+                                        newValue = sectionItem.min + (sectionItem.max - sectionItem.min) * percent
+                                        newValue = math.floor((newValue / sectionItem.step) + 0.5) * sectionItem.step
+                                        newValue = clamp(newValue, sectionItem.min, sectionItem.max)
+                                    end
+                                else
+                                    self._slider_drag = nil
+                                end
+                                if clickFrame then
+                                    local buttonSize = Vector2.new(self._font_size, self._font_size)
+                                    local decreaseOrigin = sectionItemOrigin
+                                    local increaseOrigin = sectionItemOrigin + Vector2.new(sectionWidth - self._padding * 2 - buttonSize.x, 0)
+                                    if self:_IsMouseWithinBounds(decreaseOrigin, buttonSize) then
+                                        newValue = clamp(itemValue - sectionItem.step, sectionItem.min, sectionItem.max)
+                                        clickFrame = false
+                                    elseif self:_IsMouseWithinBounds(increaseOrigin, buttonSize) then
+                                        newValue = clamp(itemValue + sectionItem.step, sectionItem.min, sectionItem.max)
+                                        clickFrame = false
+                                    end
+                                end
+                                if newValue ~= itemValue then
+                                    sectionItem.value = newValue
+                                    if itemCallback then itemCallback(newValue) end
+                                end
+                                local fillPercent = (itemValue - (sectionItem.min or 0)) / ((sectionItem.max or 1) - (sectionItem.min or 0))
+                                local fillWidth = math.max(0, sliderSize.x * fillPercent)
+                                self:_Draw(sectionItemId .. '_track', 'rect', self._theming.crust, 20, sliderOrigin, sliderSize, true)
+                                self:_Draw(sectionItemId .. '_track_border', 'rect', self._theming.border0, 21, sliderOrigin, sliderSize, false)
+                                if fillWidth > 2 then
+                                    local dimAccent = Color3.new(self._theming.accent.R * 0.3, self._theming.accent.G * 0.3, self._theming.accent.B * 0.3)
+                                    self:_Draw(sectionItemId .. '_slider', 'gradient', nil, 22, 'horizontal', sliderOrigin + Vector2.new(1, 1), Vector2.new(fillWidth - 2, sliderSize.y - 2), dimAccent, self._theming.accent)
+                                end
+                                if fillWidth > 0 then
+                                    local thumbX = sliderOrigin.x + fillWidth
+                                    local thumbH = sliderSize.y + 4
+                                    local thumbY = sliderOrigin.y - 2
+                                    self:_Draw(sectionItemId .. '_thumb', 'rect', self._theming.accent, 23, Vector2.new(thumbX - 1, thumbY), Vector2.new(2, thumbH), true)
+                                end
+                                local displayedValue = tostring(itemValue) .. sectionItem.suffix
+                                local valueTextSize = self:_GetTextBounds(displayedValue, nil, 11)
+                                self:_Draw(sectionItemId .. '_value', 'text', self._theming.accent, 22, sectionItemOrigin + Vector2.new(sectionWidth - self._padding * 2 - valueTextSize.x, 0), displayedValue, true, nil, 11)
+                                self:_Draw(sectionItemId .. '_label', 'text', sectionItem.text_color or self._theming.text, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
+                                sectionHeight = sectionHeight + labelSize.y + sliderSize.y + self._padding * 3
+
+                            elseif itemType == 'dropdown' then
+                                local labelSize = self:_GetTextBounds(sectionItem.label)
+                                local dropdownOrigin = Vector2.new(sectionItemOrigin.x + self._padding, sectionItemOrigin.y + labelSize.y + self._padding)
+                                local dropdownSize = Vector2.new(sectionWidth - self._padding * 3, labelSize.y + self._padding)
+                                local isHoveringDropdown = self:_IsMouseWithinBounds(dropdownOrigin, dropdownSize)
+                                local isDropdownOpen = self._active_dropdown and self._active_dropdown._source_id == sectionItemId
+                                if clickFrame and isHoveringDropdown then
+                                    self:_SpawnDropdown(dropdownOrigin + Vector2.new(0, dropdownSize.y - 1), dropdownSize.x, itemValue, sectionItem.choices, sectionItem.multi, function(newValue)
+                                        sectionItem.value = newValue
+                                        if itemCallback then itemCallback(newValue) end
+                                    end, sectionItemId)
+                                    clickFrame = false
+                                end
+                                local ddBodyColor = isHoveringDropdown and self._theming.surface0 or self._theming.crust
+                                local ddBorderColor = isHoveringDropdown and self._theming.accent or self._theming.border0
+                                self:_Draw(sectionItemId .. '_list', 'rect', ddBodyColor, 20, dropdownOrigin, dropdownSize, true)
+                                self:_Draw(sectionItemId .. '_border', 'rect', ddBorderColor, 21, dropdownOrigin, dropdownSize, false)
+                                local chevronX = dropdownOrigin.x + dropdownSize.x - self._padding - 4
+                                local chevronY = dropdownOrigin.y + dropdownSize.y/2
+                                local arrowColor = isHoveringDropdown and self._theming.accent or self._theming.subtext
+                                if isDropdownOpen then
+                                    self:_Draw(sectionItemId .. '_arrow', 'triangle', arrowColor, 22, true,
+                                        Vector2.new(chevronX - 4, chevronY - 2),
+                                        Vector2.new(chevronX + 4, chevronY - 2),
+                                        Vector2.new(chevronX, chevronY + 3))
+                                else
+                                    self:_Draw(sectionItemId .. '_arrow', 'triangle', arrowColor, 22, true,
+                                        Vector2.new(chevronX + 3, chevronY - 4),
+                                        Vector2.new(chevronX + 3, chevronY + 4),
+                                        Vector2.new(chevronX - 3, chevronY))
+                                end
+                                local displayedValue = table.concat(itemValue, ', ')
+                                local valueSize = self:_GetTextBounds(displayedValue)
+                                if valueSize.x > dropdownSize.x - self._padding * 2 - 12 then
+                                    displayedValue = tostring(#itemValue) .. ' item' .. (#itemValue == 1 and '' or 's')
+                                end
+                                self:_Draw(sectionItemId .. '_value', 'text', self._theming.text, 22, dropdownOrigin + Vector2.new(self._padding, valueSize.y/2 - 2), displayedValue, true)
+                                self:_Draw(sectionItemId .. '_label', 'text', sectionItem.text_color or self._theming.text, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
+                                sectionHeight = sectionHeight + labelSize.y + dropdownSize.y + self._padding * 3
+
+                            elseif itemType == 'button' then
+                                local labelSize = self:_GetTextBounds(sectionItem.label)
+                                local buttonOrigin = Vector2.new(sectionItemOrigin.x + self._padding, sectionItemOrigin.y)
+                                local buttonSize = Vector2.new(sectionWidth - self._padding * 3, labelSize.y + self._padding)
+                                local isHoveringButton = self:_IsMouseWithinBounds(buttonOrigin, buttonSize)
+                                if mouseHeld then
+                                    if isHoveringButton and clickFrame then
+                                        self._slider_drag = sectionItemId
+                                        clickFrame = false
+                                        if itemCallback then itemCallback() end
+                                    end
+                                else
+                                    self._slider_drag = nil
+                                end
+                                local isClicked = mouseHeld and self._slider_drag == sectionItemId
+                                local buttonColor = isClicked and self._theming.surface1 or self._theming.crust
+                                self:_Draw(sectionItemId .. '_body', 'rect', buttonColor, 20, buttonOrigin, buttonSize, true)
+                                self:_Draw(sectionItemId .. '_border', 'rect', self._theming.border0, 21, buttonOrigin, buttonSize, false)
+                                if isClicked then
+                                    self:_Draw(sectionItemId .. '_accent', 'rect', self._theming.accent, 22, buttonOrigin, Vector2.new(2, buttonSize.y), true)
+                                else
+                                    self:_Undraw(sectionItemId .. '_accent')
+                                end
+                                local textColor = sectionItem.text_color or (isHoveringButton and self._theming.accent or self._theming.text)
+                                self:_Draw(sectionItemId .. '_text', 'text', textColor, 22, buttonOrigin + Vector2.new(buttonSize.x/2, buttonSize.y/2), sectionItem.label, true, 'center')
+                                sectionHeight = sectionHeight + buttonSize.y + self._padding * 2
+
+                            elseif itemType == 'textbox' then
+                                local textboxOrigin = Vector2.new(sectionItemOrigin.x, sectionItemOrigin.y)
+                                local textboxSize = Vector2.new(sectionWidth - self._padding * 2, self._font_size + self._padding)
+                                local isHoveringTextbox = self:_IsMouseWithinBounds(textboxOrigin, textboxSize)
+                                local isTyping = self._input_ctx == sectionItemId
+                                local cursor = math.floor(os.clock() * 2) % 2 == 0 and '|' or ' '
+                                local displayedValue = isTyping and ((itemValue or '') .. cursor) or ((itemValue ~= '' and itemValue or sectionItem.label) .. ' ')
+                                local valueColor = sectionItem.text_color or (isTyping and self._theming.text or ((itemValue and itemValue ~= '') and self._theming.text or self._theming.subtext))
+                                if self:_GetTextBounds(displayedValue).x > textboxSize.x then
+                                    for i = 1, #displayedValue do
+                                        local sub = displayedValue:sub(i)
+                                        if self:_GetTextBounds(sub).x <= textboxSize.x - 4 then displayedValue = sub; break end
+                                    end
+                                end
+                                local valueSize = self:_GetTextBounds(displayedValue)
+                                if self:_IsKeyPressed('m1') then
+                                    if isHoveringTextbox then self._input_ctx = sectionItemId; clickFrame = false
+                                    elseif isTyping then self._input_ctx = nil; self:_RemoveDropdown(); isTyping = false; clickFrame = false end
+                                elseif ctxFrame then
+                                    if isHoveringTextbox then
+                                        self:_SpawnDropdown(self:_GetMousePos(), 60, {}, {'Copy', 'Clear'}, false, function(newValue)
+                                            if newValue[1] == 'Copy' then setclipboard(tostring(itemValue)); self:Notification('Text copied to clipboard', 5)
+                                            elseif newValue[1] == 'Clear' then sectionItem.value = ''; if sectionItem.callback then sectionItem.callback('') end end
+                                        end)
+                                        ctxFrame = false
+                                    end
+                                end
+                                if isTyping then
+                                    local charMap = {space=' ',dash='-',colon=':',period='.',comma=',',slash='/',semicolon=';',quote='\'',leftbracket='[',rightbracket=']',backslash='\\',equals='=',minus='-'}
+                                    local shiftMap = {['1']='!',['2']='@',['3']='#',['4']='$',['5']='%',['6']='^',['7']='&',['8']='*',['9']='(',['0']=')',['-']='_',['=']='+',['[']='{',[']']='}',[';']=':',['\'']='"',[',']='<',['.']='>',['/']='?',['\\']='|'}
+                                    local newValue = itemValue or ''
+                                    local shiftCtx = self:_IsKeyHeld('lshift') or self:_IsKeyHeld('rshift')
+                                    for char, _ in pairs(self._inputs) do
+                                        if self:_IsKeyPressed(char) then
+                                            local mapped = charMap[char] or char
+                                            if mapped == 'enter' then self._input_ctx = nil; break
+                                            elseif mapped == 'unbound' then newValue = newValue:sub(1, -2)
+                                            elseif mapped then
+                                                if #mapped == 1 then
+                                                    if shiftCtx and shiftMap[mapped] then mapped = shiftMap[mapped]
+                                                    elseif shiftCtx then mapped = mapped:upper() end
+                                                    newValue = newValue .. mapped
+                                                end
+                                            end
+                                            if sectionItem.callback then sectionItem.callback(newValue) end
+                                            sectionItem.value = newValue
+                                        end
+                                    end
+                                end
+                                self:_Draw(sectionItemId .. '_input', 'text', valueColor, 22, textboxOrigin + Vector2.new(4, valueSize.y/2 - 2), displayedValue, true)
+                                self:_Draw(sectionItemId .. '_body', 'rect', self._theming.crust, 21, textboxOrigin, textboxSize, true)
+                                sectionHeight = sectionHeight + textboxSize.y + self._padding
+
+                            elseif itemType == 'label' then
+                                local labelColor = sectionItem.text_color or self._theming.subtext
+                                local labelSize = self:_GetTextBounds(sectionItem.label)
+                                self:_Draw(sectionItemId .. '_text', 'text', labelColor, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
+                                sectionHeight = sectionHeight + labelSize.y + self._padding
+                            end
+                            end
+                        end
+
+                        if isSectionMirror then totalSectionHeightR = totalSectionHeightR + sectionHeight + sectionTitleSize.y/2
+                        else totalSectionHeightL = totalSectionHeightL + sectionHeight + sectionTitleSize.y/2 end
+                        if isLastSection then
+                            if isSectionMirror then sectionHeight = bodyContentSize.y - totalSectionHeightR + sectionHeight - self._padding
+                            else sectionHeight = bodyContentSize.y - totalSectionHeightL + sectionHeight - self._padding end
+                        end
+                        self:_Draw(sectionDrawId .. '_backdrop', 'rect', self._theming.surface0, 11, sectionPos, Vector2.new(sectionWidth, sectionHeight), true)
+                        self:_Draw(sectionDrawId .. '_border', 'rect', self._theming.border0, 12, sectionPos, Vector2.new(sectionWidth, sectionHeight), false)
+                        if isSectionMirror then totalSectionHeightR = totalSectionHeightR + self._padding
+                        else totalSectionHeightL = totalSectionHeightL + self._padding end
+                    else
+                        self:_UndrawStartsWith(sectionDrawId)
+                    end
+                    sectionIter = sectionIter + 1
+                end
+                tabIter = tabIter + 1
+            end
+
+            if clickFrame and not self._menu_drag and self:_IsMouseWithinBounds(Vector2.new(self.x, self.y), Vector2.new(self.w, self.h)) then
+                local mousePos = self:_GetMousePos()
+                self._menu_drag = Vector2.new(mousePos.x - self.x, mousePos.y - self.y)
+            end
+        else
+            self:_RemoveColorpicker()
+            self:_RemoveDropdown()
+        end
+
+        local menuFade = 1 - (self._menu_toggled_at - (os.clock() - 0.25)) / 0.25
+        if menuFade < 1.1 then
+            self:_SetOpacityStartsWith('menu_', math.abs((self._menu_open and 0 or 1) - clamp(menuFade, 0, 1)))
+        elseif not self._menu_open and menuFade > 1.1 and menuFade < 1.6 then
+            self:_UndrawStartsWith('menu_')
+        end
+
+        if hoveredTooltip then
+            local mousePos = self:_GetMousePos()
+            local prevMouse = self._tooltip_mouse_prev
+            local isMoving = false
+            if prevMouse then
+                local dx = mousePos.x - prevMouse.x
+                local dy = mousePos.y - prevMouse.y
+                if math.sqrt(dx*dx + dy*dy) > 2 then isMoving = true end
+            end
+
+            if not self._tooltip_mouse_prev or isMoving then
+                self._tooltip_mouse_prev = mousePos
+                self._tooltip_hover_time = os.clock()
+                self:_UndrawStartsWith('menu_tooltip')
+            elseif os.clock() - self._tooltip_hover_time > 0.15 then
+                local tooltipFade = 1 - ((self._tooltip_hover_time + 0.15) - (os.clock() - 0.25)) / 0.25
+                if tooltipFade < 1.1 then self:_SetOpacityStartsWith('menu_tooltip', math.abs((self._menu_open and 0 or 1) - clamp(tooltipFade, 0, 1))) end
+                
+                local tooltipOrigin = Vector2.new(mousePos.x + 11, mousePos.y)
+                local tooltipSize = self:_GetTextBounds(hoveredTooltip)
+                local tooltipFullSize = tooltipSize + Vector2.new(self._padding, self._padding)
+                
+                self:_Draw('menu_tooltip_body', 'rect', self._theming.surface1, 1000, tooltipOrigin, tooltipFullSize, true)
+                self:_Draw('menu_tooltip_crust', 'rect', self._theming.crust, 1001, tooltipOrigin, tooltipFullSize, false)
+                self:_Draw('menu_tooltip_border', 'rect', self._theming.border1, 1002, tooltipOrigin + Vector2.new(1, 1), tooltipFullSize - Vector2.new(2, 2), false)
+                self:_Draw('menu_tooltip_text', 'text', self._theming.text, 1003, tooltipOrigin + Vector2.new(self._padding / 2, self._padding / 2), hoveredTooltip, true)
+            end
+        else
+            self:_UndrawStartsWith('menu_tooltip')
+            self._tooltip_mouse_prev = nil
+            self._tooltip_hover_time = nil
         end
     end
 
-    local function removeAllStandESPDrawings()
-        for k, d in pairs(standESPDrawings) do
-            d.nameText:Remove(); d.distText:Remove()
-            standESPDrawings[k] = nil
-        end
+    function UILib:SetBlockRobloxInput(value) self._block_roblox_input = value end
+    function UILib:Unload()
+        for _, draw in pairs(self._drawings) do pcall(function() draw:Remove() end) end
+        self._drawings = {}
+        self._tree = {}
+        setrobloxinput(true)
     end
 
-    local function updateFrame(deltaTime)
-        if state.itemESP or state.autoCollect then
-            refreshItemCache()
-        end
-        renderItemESP()
-        renderPlayerStandESP()
-    end
+    function UILib:ShowDemoMenu()
+        self:SetMenuSize(Vector2.new(540, 680))
+        self:CenterMenu()
 
-    local function safeUpdateFrame(deltaTime)
-        local now = os.clock()
-        if now < state.runtimeCooldownUntil then return end
-        local ok = pcall(updateFrame, deltaTime)
-        if ok then
-            state.frameErrorCount = math.max(0, state.frameErrorCount - 1)
-            return
-        end
-        state.frameErrorCount = state.frameErrorCount + 1
-        if state.frameErrorCount >= 20 then
-            state.itemESP          = false
-            state.autoCollect      = false
-            state.npcKillerEnabled = false
-            stopAutoCollect()
-            stopAllNpcKillerLoops()
-            hideAllItemDrawings()
-            state.runtimeCooldownUntil = now + 1.5
-            state.frameErrorCount = 0
-        end
-    end
+        local elementsTab = self:Tab('Elements')
 
+        local toggles = elementsTab:Section('Toggles')
+        local togglePlain = toggles:Toggle('Basic toggle', false)
+        local toggleTip = toggles:Toggle('With tooltip', false, nil, false, 'Hover me for info!')
+        local toggleUnsafe = toggles:Toggle('Unsafe toggle', false, nil, true, 'This is dangerous!')
+        local toggleKey = toggles:Toggle('With keybind', false)
+        local key = toggleKey:AddKeybind()
+        local toggleColor = toggles:Toggle('With colorpicker', false)
+        local color = toggleColor:AddColorpicker('Pick Color')
+        local toggleCustom = toggles:Toggle('Custom text color', true)
+        toggleCustom:SetTextColor(Color3.fromRGB(255, 170, 50))
 
-    local frameLoopAlive = true
-    task.spawn(function()
-        while frameLoopAlive and not state.shouldUnload do
-            safeUpdateFrame(config.fallbackDeltaTime)
+        local inputs = elementsTab:Section('Inputs')
+        inputs:Label('-- Info Labels --')
+        local dragMe = inputs:Slider('Slider', 50, 1, 0, 100, '%')
+        local stepSlider = inputs:Slider('Step slider', 0, 5, -50, 50, ' units')
+        local pickSingle = inputs:Dropdown('Single select', {'Option A'}, {'Option A', 'Option B', 'Option C'}, false)
+        local pickMulti = inputs:Dropdown('Multi select', {'Red', 'Green'}, {'Red', 'Green', 'Blue', 'Yellow', 'Purple'}, true)
+        inputs:Textbox('Text input', nil, function(v) end)
+        inputs:Textbox('With default', 'Hello world', function(v) end)
+        inputs:Button('Reset all', function()
+            togglePlain:Set(false)
+            toggleTip:Set(false)
+            toggleUnsafe:Set(false)
+            toggleKey:Set(false)
+            key:Set(nil, nil)
+            toggleColor:Set(false)
+            color:Set(Color3.fromRGB(255, 255, 255))
+            dragMe:Set(50)
+            stepSlider:Set(0)
+            pickSingle:Set({'Option A'})
+            pickMulti:Set({'Red', 'Green'})
+        end)
+
+        local miniTab = self:Tab('Mini Tabs')
+
+        local tabbed = miniTab:TabbedSection({'Farming', 'Auto', 'Events'})
+        tabbed['Farming']:Label('Configure auto-farming below')
+        tabbed['Farming']:Toggle('Auto Farm', false)
+        tabbed['Farming']:Dropdown('Farm Mode', {'Nearest'}, {'Nearest', 'Furthest', 'Weakest'}, false)
+        tabbed['Farming']:Slider('Farm Radius', 50, 5, 10, 200, ' studs')
+        tabbed['Auto']:Toggle('Auto Chest', false)
+        tabbed['Auto']:Toggle('Auto Quest', false)
+        tabbed['Auto']:Slider('Speed', 100, 10, 0, 500, '%')
+        tabbed['Auto']:Textbox('Target NPC', nil, function(v) end)
+        tabbed['Events']:Toggle('Sea Events', false)
+        tabbed['Events']:Dropdown('Priority', {'High', 'Low'}, {'High', 'Medium', 'Low'}, true)
+        tabbed['Events']:Button('Force Join', function() end)
+
+        miniTab:Section('Below Tabs')
+        :Label('hi there')
+
+        local orderTab = self:Tab('Ordering')
+        local orderA = orderTab:Section('Alpha')
+        orderA:Toggle('Alpha toggle', false)
+        orderA:Slider('Alpha slider', 50, 1, 0, 100, '%')
+
+        local orderB = orderTab:Section('Beta')
+        orderB:Toggle('Beta toggle', true)
+        orderB:Button('Beta button', function() end)
+
+        local orderC = orderTab:Section('Gamma')
+        orderC:Toggle('Gamma toggle', false)
+        orderC:Dropdown('Gamma pick', {'A'}, {'A', 'B', 'C'}, false)
+
+        orderTab:SetSectionOrder({'Gamma', 'Alpha', 'Beta'})
+
+        self:SetTabOrder({'Elements', 'Mini Tabs', 'Ordering'})
+
+        local shouldDie = false
+        local _, menuSettings = self:CreateSettingsTab()
+        menuSettings:Button('Unload', function()
+            shouldDie = true
+        end)
+
+        self:Notification('jade loaded successfully', 8)
+        self:Notification('Press F1 to toggle the menu', 15)
+
+        while not shouldDie do
+            self:Step()
             task.wait()
         end
-    end)
 
-    while not state.shouldUnload do
-        ui:Step()
-        task.wait()
+        self:Unload()
+        return true
     end
-
-    frameLoopAlive = false
-    stopAutoCollect()
-    stopAutoSummonStand()
-    stopAutoStandRoll()
-    stopAllNpcKillerLoops()
-    if state.voidDio then stopVoidDio() end
-    if state.autoAttackThread then task.cancel(state.autoAttackThread) end
-    if state.autoMeditateThread then task.cancel(state.autoMeditateThread) end
-    if state.autoPlayThread then task.cancel(state.autoPlayThread) end
-    if state.autoReplayThread then task.cancel(state.autoReplayThread) end
-    if state.autoPvPThread then task.cancel(state.autoPvPThread) end
-    if state.freezeAnimations then updateFreezeAnimations(false) end
-
-
-    removeAllItemDrawings()
-    removeAllStandESPDrawings()
-    ui:Unload()
+end
