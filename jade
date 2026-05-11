@@ -28,12 +28,15 @@ UILib = {
     _active_dropdown = nil,
     _active_colorpicker = nil,
     _dropdown_scroll_drag = nil,
+    _section_scroll_drag = nil,
+    _section_scroll_drag_offset = nil,
     _copied_color = nil,
     _tooltip_hover_time = nil,
     _tooltip_mouse_prev = nil,
     _activities = {},
 
     title = 'jade',
+    _config_folder = 'Jade/Configs',
     _custom_title_enabled = false,
     _custom_title = '',
     w = 480,
@@ -133,13 +136,15 @@ do
     end
 
     function UILib:_GetMousePos()
-        local ok, pos = pcall(function()
-            return game:GetService('UserInputService'):GetMouseLocation()
-        end)
-        if ok and pos then
-            return Vector2.new(pos.X, pos.Y)
+        local mousePos = Vector2.new()
+        local myPlayer = game:GetService('Players').LocalPlayer
+        if myPlayer then
+            local myMouse = myPlayer:GetMouse()
+            if myMouse then
+                mousePos = Vector2.new(myMouse.X, myMouse.Y)
+            end
         end
-        return Vector2.new()
+        return mousePos
     end
 
     function UILib:_IsMouseWithinBounds(origin, size)
@@ -277,10 +282,8 @@ do
 
     function UILib:_RemoveDraw(drawId)
         local drawObject = self._drawings[drawId]
-        if drawObject then
-            drawObject:Remove()
-            self._drawings[drawId] = nil
-        end
+        if drawObject then drawObject:Remove() end
+        self._drawings[drawId] = nil
     end
 
     function UILib:_Undraw(drawId)
@@ -486,7 +489,6 @@ do
 
     function UILib:_Label(tabName, sectionName, text, color, miniTab)
         local sectionContent = self._tree[tabName]._items[sectionName]
-        local itemId = #sectionContent._items + 1
         local item = {
             type_ = 'label', label = text, text_color = color,
             _mini_tab = miniTab,
@@ -494,16 +496,29 @@ do
         table.insert(sectionContent._items, item)
         return {
             SetText = function(_, newText)
-                self._tree[tabName]._items[sectionName]._items[itemId].label = newText
+                item.label = newText
             end,
             SetTextColor = function(_, newColor)
-                self._tree[tabName]._items[sectionName]._items[itemId].text_color = newColor
+                item.text_color = newColor
+            end,
+            Remove = function(_)
+                local items = self._tree[tabName]._items[sectionName]._items
+                for i, v in ipairs(items) do
+                    if v == item then
+                        if item._drawId then
+                            self:_RemoveDrawStartsWith(item._drawId)
+                        end
+                        table.remove(items, i)
+                        self._tree[tabName]._items[sectionName]._dirty = true
+                        break
+                    end
+                end
             end
         }
     end
 
-    function UILib:_Section(tabName, sectionName)
-        self._tree[tabName]._items[sectionName] = { _items = {} }
+    function UILib:_Section(tabName, sectionName, maxVisible)
+        self._tree[tabName]._items[sectionName] = { _items = {}, _max_visible = maxVisible, _scroll_offset = 0 }
         table.insert(self._tree[tabName]._section_order, sectionName)
         return {
             Toggle = function(_, ...) return self:_Toggle(tabName, sectionName, ...) end,
@@ -556,6 +571,10 @@ do
     function UILib:SetMenuPosition(newPos) self.x = newPos.x or self.x; self.y = newPos.y or self.y end
     function UILib:SetMenuSize(newSize) self.w = newSize.x or self.x; self.h = newSize.y or self.y end
 
+    function UILib:SetConfigFolder(folder)
+        self._config_folder = 'Jade/Configs/' .. folder
+    end
+
     function UILib:CenterMenu()
         local screenSize = self:_GetScreenSize()
         local menuSize = self:GetMenuSize()
@@ -577,7 +596,7 @@ do
         table.insert(self._tab_order, tabName)
         if not self._open_tab then self._open_tab = tabName end
         return {
-            Section = function(_, sectionName) return self:_Section(tabName, sectionName) end,
+            Section = function(_, sectionName, maxVisible) return self:_Section(tabName, sectionName, maxVisible) end,
             TabbedSection = function(_, miniTabNames) return self:_TabbedSection(tabName, miniTabNames) end,
             SetSectionOrder = function(_, order) self._tree[tabName]._section_order = order end,
         }
@@ -599,7 +618,7 @@ do
         end)
 
         local themingSection = settingsTab:Section('Theming')
-        local themes = {'Jade', 'Ruby', 'Amethyst', 'Gold', 'Sapphire', 'Obsidian'}
+        local themes = {'Jade', 'Ruby', 'Amethyst', 'Gold', 'Sapphire', 'Obsidian', 'Lotus'}
         local themingTextColor, themingBodyColor, themingAccentColor, themingSubtextColor, themingBorder0Color, themingBorder1Color, themingSurface0Color, themingSurface1Color, themingCrustColor
         local themingTheme = themingSection:Dropdown('Theme', themes[1], themes, false, function(newValue)
             if not newValue then return end
@@ -670,6 +689,17 @@ do
                 themingSurface1Color:Set(Color3.fromRGB(14, 14, 14))
                 themingSurface0Color:Set(Color3.fromRGB(8, 8, 8))
                 themingCrustColor:Set(Color3.fromRGB(0, 0, 0))
+            elseif theme == themes[7] then
+                -- kanagawa lotus (light)
+                themingTextColor:Set(Color3.fromRGB(255, 255, 255))
+                themingBodyColor:Set(Color3.fromRGB(242, 236, 188))
+                themingAccentColor:Set(Color3.fromRGB(77, 105, 155))
+                themingSubtextColor:Set(Color3.fromRGB(138, 137, 128))
+                themingBorder0Color:Set(Color3.fromRGB(113, 110, 97))
+                themingBorder1Color:Set(Color3.fromRGB(213, 206, 163))
+                themingSurface0Color:Set(Color3.fromRGB(229, 221, 176))
+                themingSurface1Color:Set(Color3.fromRGB(220, 213, 172))
+                themingCrustColor:Set(Color3.fromRGB(113, 110, 97))
             end
         end)
 
@@ -697,7 +727,7 @@ do
         local configSection = settingsTab:Section('Config')
         
         local function GetConfigs()
-            local success, files = pcall(listfiles, "Jade/Configs")
+            local success, files = pcall(listfiles, self._config_folder)
             local configs = {}
             if success and type(files) == "table" then
                 for _, file in ipairs(files) do
@@ -751,7 +781,7 @@ do
             local removedCount = 0
             for _, configName in ipairs(_delete_targets) do
                 local safeName = string.gsub(configName, "[^%w%s]", "")
-                local path = "Jade/Configs/" .. safeName .. ".json"
+                local path = self._config_folder .. "/" .. safeName .. ".json"
                 local success, err = pcall(delfile, path)
                 if success then removedCount = removedCount + 1 end
             end
@@ -782,17 +812,17 @@ do
             self:Notification("Config list refreshed", 3)
         end)
 
-        local ok, autoloadContent = pcall(readfile, "Jade/Configs/autoload.txt")
+        local ok, autoloadContent = pcall(readfile, self._config_folder .. "/autoload.txt")
         local autoloadStr = (ok and type(autoloadContent) == "string") and autoloadContent or ""
 
         configSection:Toggle('Auto-Load Selected', autoloadStr == self._config_name and autoloadStr ~= "", function(newValue)
             pcall(makefolder, "Jade")
-            pcall(makefolder, "Jade/Configs")
+            pcall(makefolder, self._config_folder)
             if newValue then
-                pcall(writefile, "Jade/Configs/autoload.txt", self._config_name)
+                pcall(writefile, self._config_folder .. "/autoload.txt", self._config_name)
                 self:Notification("Auto-load set to " .. self._config_name, 3)
             else
-                pcall(writefile, "Jade/Configs/autoload.txt", "")
+                pcall(writefile, self._config_folder .. "/autoload.txt", "")
                 self:Notification("Auto-load disabled", 3)
             end
         end)
@@ -815,14 +845,16 @@ do
                 local sectionContent = tabContent._items[sectionName]
                 data[tabName][sectionName] = {}
                 for _, item in ipairs(sectionContent._items) do
+                    local key = item.label
+                    if item._mini_tab then key = item._mini_tab .. ":" .. key end
                     if item.type_ == 'toggle' then
-                        data[tabName][sectionName][item.label] = { 
+                        data[tabName][sectionName][key] = { 
                             value = item.value, 
                             keybind = item.keybind and item.keybind.value, 
                             colorpicker = item.colorpicker and { R = item.colorpicker.value.R, G = item.colorpicker.value.G, B = item.colorpicker.value.B } 
                         }
                     elseif item.type_ == 'slider' or item.type_ == 'dropdown' or item.type_ == 'textbox' then
-                        data[tabName][sectionName][item.label] = item.value
+                        data[tabName][sectionName][key] = item.value
                     end
                 end
             end
@@ -837,10 +869,10 @@ do
             local json = HttpService:JSONEncode(data)
 
             pcall(makefolder, "Jade")
-            pcall(makefolder, "Jade/Configs")
+            pcall(makefolder, self._config_folder)
 
             local safeName = string.gsub(filename, "[^%w%s]", "")
-            local path = "Jade/Configs/" .. safeName .. ".json"
+            local path = self._config_folder .. "/" .. safeName .. ".json"
 
             writefile(path, json)
             return path
@@ -855,7 +887,7 @@ do
 
     function UILib:LoadConfig(filename)
         local safeName = string.gsub(filename, "[^%w%s]", "")
-        local path = "Jade/Configs/" .. safeName .. ".json"
+        local path = self._config_folder .. "/" .. safeName .. ".json"
         
         local ok, content = pcall(readfile, path)
         if not ok or type(content) ~= "string" or content == "" then 
@@ -877,22 +909,29 @@ do
                 for sectionName, secData in pairs(tabData) do
                     if type(secData) == "table" and self._tree[tabName]._items[sectionName] then
                         for _, item in ipairs(self._tree[tabName]._items[sectionName]._items) do
-                            local val = secData[item.label]
+                            local key = item.label
+                            if item._mini_tab then key = item._mini_tab .. ":" .. key end
+                            local val = secData[key]
                             if val ~= nil then
-                                pcall(function()
-                                    if item.type_ == 'toggle' and type(val) == 'table' then
-                                        if val.value ~= nil then item.value = val.value end
-                                        if val.keybind ~= nil and item.keybind then item.keybind.value = val.keybind end
+                                if item.type_ == 'toggle' and type(val) == 'table' then
+                                    if val.value ~= nil then item.value = val.value end
+                                    if val.keybind ~= nil and item.keybind then
+                                        item.keybind.value = val.keybind
+                                        if item.keybind.callback and val.keybind and self._inputs[val.keybind] then
+                                            pcall(item.keybind.callback, self._inputs[val.keybind].id, item.keybind.mode)
+                                        end
+                                    end
+                                    pcall(function()
                                         if val.colorpicker ~= nil and val.colorpicker.R and val.colorpicker.G and val.colorpicker.B and item.colorpicker then
                                             item.colorpicker.value = Color3.new(val.colorpicker.R, val.colorpicker.G, val.colorpicker.B)
                                             if item.colorpicker.callback then item.colorpicker.callback(item.colorpicker.value) end
                                         end
-                                        if item.callback then item.callback(item.value) end
-                                    elseif (item.type_ == 'slider' or item.type_ == 'dropdown' or item.type_ == 'textbox') then
-                                        item.value = val
-                                        if item.callback then item.callback(item.value) end
-                                    end
-                                end)
+                                    end)
+                                    if item.callback then pcall(item.callback, item.value) end
+                                elseif (item.type_ == 'slider' or item.type_ == 'dropdown' or item.type_ == 'textbox') then
+                                    item.value = val
+                                    if item.callback then pcall(item.callback, item.value) end
+                                end
                             end
                         end
                     end
@@ -1080,64 +1119,57 @@ do
                     self:_Draw('dropdown_choice_' .. tostring(vi), 'text', choiceColor, 102, choiceOrigin, choice, true)
                     totalHeight = totalHeight + labelSize.y + self._padding
                 end
-                -- hide leftover choice draws from previous offset
-                for ci = visibleCount + 1, maxVis + 1 do
+
+                for ci = visibleCount + 1, maxVis + 5 do
                     self:_Undraw('dropdown_choice_bg_' .. tostring(ci))
                     self:_Undraw('dropdown_choice_' .. tostring(ci))
                 end
 
-                self:_Draw('dropdown_crust', 'rect', self._theming.crust, 100, dropdownOrigin, Vector2.new(dropdown.width, totalHeight), false)
-                self:_Draw('dropdown_body', 'rect', self._theming.surface0, 101, dropdownOrigin + Vector2.new(1, 1), Vector2.new(dropdown.width - 2, totalHeight - 2), true)
-
-                -- scrollbar
                 if needsScroll then
-                    local trackX = dropdownOrigin.x + choiceAreaW
-                    local trackY = dropdownOrigin.y + 2
-                    local trackH = totalHeight - 4
+                    local trackX = dropdownOrigin.x + dropdown.width - scrollBarW - 1
+                    local trackY = dropdownOrigin.y + self._padding
+                    local trackH = totalHeight - self._padding
                     local thumbRatio = maxVis / totalChoices
-                    local thumbH = math.max(trackH * thumbRatio, 12)
+                    local thumbH = math.max(12, math.floor(trackH * thumbRatio))
                     local scrollRange = totalChoices - maxVis
-                    local thumbTravel = trackH - thumbH
-                    local thumbY = trackY + (offset / math.max(scrollRange, 1)) * thumbTravel
+                    local thumbY = trackY + math.floor((trackH - thumbH) * (offset / scrollRange))
 
-                    self:_Draw('dropdown_scroll_track', 'rect', self._theming.border0, 102, Vector2.new(trackX, trackY), Vector2.new(scrollBarW, trackH), true)
-
-                    local thumbOrigin = Vector2.new(trackX, thumbY)
-                    local thumbSize = Vector2.new(scrollBarW, thumbH)
-                    local isHoveringThumb = self:_IsMouseWithinBounds(thumbOrigin, thumbSize)
-                    local isHoveringTrack = self:_IsMouseWithinBounds(Vector2.new(trackX, trackY), Vector2.new(scrollBarW, trackH))
+                    self:_Draw('dropdown_scroll_track', 'rect', self._theming.border0, 103,
+                        Vector2.new(trackX, trackY), Vector2.new(scrollBarW, trackH), true)
+                    local isHoveringThumb = self:_IsMouseWithinBounds(Vector2.new(trackX - 2, thumbY), Vector2.new(scrollBarW + 4, thumbH))
+                    local isHoveringTrack = self:_IsMouseWithinBounds(Vector2.new(trackX - 2, trackY), Vector2.new(scrollBarW + 4, trackH))
+                    local thumbColor = (isHoveringThumb or self._dropdown_scroll_drag) and self._theming.accent or self._theming.subtext
+                    self:_Draw('dropdown_scroll_thumb', 'rect', thumbColor, 104,
+                        Vector2.new(trackX + 1, thumbY), Vector2.new(scrollBarW - 2, thumbH), true)
 
                     if mouseHeld and self._dropdown_scroll_drag then
-                        local mousePos = self:_GetMousePos()
-                        local relY = mousePos.y - trackY - self._dropdown_scroll_drag
-                        local newOffset = math.floor((relY / math.max(thumbTravel, 1)) * scrollRange + 0.5)
-                        dropdown._scroll_offset = clamp(newOffset, 0, scrollRange)
+                        local mouseY = self:_GetMousePos().y
+                        local relY = mouseY - trackY - self._dropdown_scroll_drag
+                        local pct = clamp(relY / (trackH - thumbH), 0, 1)
+                        dropdown._scroll_offset = math.floor(pct * scrollRange + 0.5)
                         shouldCancel = false
                     elseif clickFrame and isHoveringThumb then
-                        local mousePos = self:_GetMousePos()
-                        self._dropdown_scroll_drag = mousePos.y - thumbY
+                        self._dropdown_scroll_drag = self:_GetMousePos().y - thumbY
                         shouldCancel = false
                         clickFrame = false
                     elseif clickFrame and isHoveringTrack then
-                        local mousePos = self:_GetMousePos()
-                        local relY = mousePos.y - trackY - thumbH / 2
-                        local newOffset = math.floor((relY / math.max(thumbTravel, 1)) * scrollRange + 0.5)
-                        dropdown._scroll_offset = clamp(newOffset, 0, scrollRange)
+                        local mouseY = self:_GetMousePos().y
+                        local pct = clamp((mouseY - trackY - thumbH / 2) / (trackH - thumbH), 0, 1)
+                        dropdown._scroll_offset = math.floor(pct * scrollRange + 0.5)
                         shouldCancel = false
                         clickFrame = false
                     end
-
                     if not mouseHeld then
                         self._dropdown_scroll_drag = nil
                     end
-
-                    local thumbColor = (isHoveringThumb or self._dropdown_scroll_drag) and self._theming.accent or self._theming.surface1
-                    self:_Draw('dropdown_scroll_thumb', 'rect', thumbColor, 103, thumbOrigin, thumbSize, true)
                 else
                     self:_Undraw('dropdown_scroll_track')
                     self:_Undraw('dropdown_scroll_thumb')
+                    self._dropdown_scroll_drag = nil
                 end
 
+                self:_Draw('dropdown_crust', 'rect', self._theming.crust, 100, dropdownOrigin, Vector2.new(dropdown.width, totalHeight), false)
+                self:_Draw('dropdown_body', 'rect', self._theming.surface0, 101, dropdownOrigin + Vector2.new(1, 1), Vector2.new(dropdown.width - 2, totalHeight - 2), true)
                 if clickFrame and shouldCancel then self:_RemoveDropdown() end
                 clickFrame = false
             end
@@ -1340,9 +1372,37 @@ do
                             sectionContent._prev_mini_tab = sectionContent._active_mini_tab
                         end
 
+                        if sectionContent._dirty then
+                            self:_UndrawStartsWith(sectionDrawId .. '_item_')
+                            sectionContent._dirty = false
+                        end
+
+                        local secMaxVis = sectionContent._max_visible
+                        local secOffset = sectionContent._scroll_offset or 0
+                        local secIdx = 0
+                        local secTotal = 0
+                        if secMaxVis then
+                            for _, si in ipairs(sectionContent._items) do
+                                if not hasMiniTabs or si._mini_tab == sectionContent._active_mini_tab then
+                                    secTotal = secTotal + 1
+                                end
+                            end
+                            secOffset = math.min(secOffset, math.max(0, secTotal - secMaxVis))
+                            sectionContent._scroll_offset = secOffset
+                        end
+                        local secNeedsScroll = secMaxVis and secTotal > secMaxVis
+                        local secScrollChanged = secMaxVis and sectionContent._prev_scroll_offset ~= secOffset
+                        if secScrollChanged then
+                            sectionContent._prev_scroll_offset = secOffset
+                        end
+
                         for sectionItemIter, sectionItem in ipairs(sectionContent._items) do
                             if not hasMiniTabs or sectionItem._mini_tab == sectionContent._active_mini_tab then
                             local sectionItemId = sectionDrawId .. '_item_' .. tostring(sectionItemIter)
+                            sectionItem._drawId = sectionItemId
+                            secIdx = secIdx + 1
+                            local secInRange = not secMaxVis or (secIdx > secOffset and secIdx <= secOffset + secMaxVis)
+                            if not secInRange then if secScrollChanged then self:_UndrawStartsWith(sectionItemId) end else
                             local sectionItemOrigin = Vector2.new(sectionPos.x + self._padding, sectionPos.y + sectionHeight)
                             local itemType = sectionItem.type_
                             local itemValue = sectionItem.value
@@ -1636,15 +1696,65 @@ do
                             elseif itemType == 'label' then
                                 local labelColor = sectionItem.text_color or self._theming.subtext
                                 local labelSize = self:_GetTextBounds(sectionItem.label)
+                                local isHoveringLabel = self:_IsMouseWithinBounds(sectionItemOrigin, Vector2.new(sectionWidth - self._padding * 2, labelSize.y))
+                                if ctxFrame and isHoveringLabel and sectionItem.label ~= '' then
+                                    setclipboard(sectionItem.label)
+                                    self:Notification('Copied!', 2)
+                                    ctxFrame = false
+                                end
                                 self:_Draw(sectionItemId .. '_text', 'text', labelColor, 20, sectionItemOrigin + Vector2.new(self._padding, 0), sectionItem.label, true)
                                 sectionHeight = sectionHeight + labelSize.y + self._padding
                             end
+                            end -- secInRange
                             end
+                        end
+
+                        -- section scrollbar
+                        if secNeedsScroll then
+                            local secScrollBarW = 6
+                            local trackX = sectionPos.x + sectionWidth - secScrollBarW - 2
+                            local trackY = sectionPos.y + self._padding
+                            local trackH = sectionHeight - self._padding
+                            if trackH > 20 then
+                                local thumbRatio = secMaxVis / secTotal
+                                local thumbH = math.max(12, math.floor(trackH * thumbRatio))
+                                local scrollRange = math.max(1, secTotal - secMaxVis)
+                                local thumbY = trackY + math.floor((trackH - thumbH) * (secOffset / scrollRange))
+                                local dragKey = sectionDrawId .. '_scroll'
+                                self:_Draw(sectionDrawId .. '_scroll_track', 'rect', self._theming.border0, 25,
+                                    Vector2.new(trackX, trackY), Vector2.new(secScrollBarW, trackH), true)
+                                local isHoveringThumb = self:_IsMouseWithinBounds(Vector2.new(trackX - 2, thumbY), Vector2.new(secScrollBarW + 4, thumbH))
+                                local isHoveringTrack = self:_IsMouseWithinBounds(Vector2.new(trackX - 2, trackY), Vector2.new(secScrollBarW + 4, trackH))
+                                local thumbColor = (isHoveringThumb or self._section_scroll_drag == dragKey) and self._theming.accent or self._theming.subtext
+                                self:_Draw(sectionDrawId .. '_scroll_thumb', 'rect', thumbColor, 26,
+                                    Vector2.new(trackX + 1, thumbY), Vector2.new(secScrollBarW - 2, thumbH), true)
+                                if mouseHeld and self._section_scroll_drag == dragKey then
+                                    local mouseY = self:_GetMousePos().y
+                                    local relY = mouseY - trackY - self._section_scroll_drag_offset
+                                    local pct = clamp(relY / (trackH - thumbH), 0, 1)
+                                    sectionContent._scroll_offset = math.floor(pct * scrollRange + 0.5)
+                                elseif clickFrame and isHoveringThumb then
+                                    self._section_scroll_drag = dragKey
+                                    self._section_scroll_drag_offset = self:_GetMousePos().y - thumbY
+                                    clickFrame = false
+                                elseif clickFrame and isHoveringTrack then
+                                    local mouseY = self:_GetMousePos().y
+                                    local pct = clamp((mouseY - trackY - thumbH / 2) / (trackH - thumbH), 0, 1)
+                                    sectionContent._scroll_offset = math.floor(pct * scrollRange + 0.5)
+                                    clickFrame = false
+                                end
+                                if not mouseHeld and self._section_scroll_drag == dragKey then
+                                    self._section_scroll_drag = nil
+                                end
+                            end
+                        else
+                            self:_Undraw(sectionDrawId .. '_scroll_track')
+                            self:_Undraw(sectionDrawId .. '_scroll_thumb')
                         end
 
                         if isSectionMirror then totalSectionHeightR = totalSectionHeightR + sectionHeight + sectionTitleSize.y/2
                         else totalSectionHeightL = totalSectionHeightL + sectionHeight + sectionTitleSize.y/2 end
-                        if isLastSection then
+                        if isLastSection and not secMaxVis then
                             if isSectionMirror then sectionHeight = bodyContentSize.y - totalSectionHeightR + sectionHeight - self._padding
                             else sectionHeight = bodyContentSize.y - totalSectionHeightL + sectionHeight - self._padding end
                         end
